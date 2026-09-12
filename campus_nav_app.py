@@ -255,4 +255,4 @@ Beispiel:
 # 7. Footer
 # =============================================================================
 st.markdown("---")
-st.markdown("💡 *Entwickelt mit ❤️ für den Uni-Campus. AcademicCloud-API verwendet.*")
+st.markdown("💡 *Entwickelt mit ❤️ von Leonie und Caro für den Leuphana-Campus. AcademicCloud-API verwendet.*")
