@@ -172,7 +172,7 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
 
                         st.info("📥 Lade Kartendaten...")
                         try:
-                            G = ox.graph_from_xml("map-3.osm", simplify=True, retain_all=False, network_type="walk")
+                            G = ox.graph_from_xml("map-3.osm", simplify=True, retain_all=False)
                             st.success("✅ Kartendaten geladen.")
                         except Exception as e:
                             st.error(f"❌ Fehler beim Laden der Karte: {e}")
