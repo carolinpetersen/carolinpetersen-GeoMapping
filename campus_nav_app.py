@@ -28,7 +28,7 @@ if not ACADEMICCLOUD_API_KEY:
 MODEL_NAME = "meta-llama-3.1-8b-instruct"
 
 # API-Endpunkt
-API_URL = "https://chat-ai.academiccloud.de/v1"
+API_URL = "https://chat-ai.academiccloud.de/v1/chat/completions"
 
 # Header
 headers = {
