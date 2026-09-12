@@ -19,8 +19,8 @@ import os
 load_dotenv()
 
 # Hole API-Key aus Umgebungsvariable
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
+ACADEMICCLOUD_API_KEY = os.getenv("ACADEMICCLOUD_API_KEY")
+if not ACADEMICCLOUD_API_KEY:
     st.error("❌ API-Key nicht gefunden. Bitte prüfe deine .env-Datei.")
     st.stop()
 
