@@ -25,7 +25,7 @@ if not ACADEMICCLOUD_API_KEY:
     st.stop()
 
 # Modell
-MODEL_NAME = "gpt-3.5-turbo"
+MODEL_NAME = "meta-llama-3.1-8b-instruct"
 
 # API-Endpunkt
 API_URL = "https://chat-ai.academiccloud.de/v1"
@@ -39,7 +39,7 @@ headers = {
 # =============================================================================
 # 1. Funktion: LLM über AcademicCloud-API aufrufen
 # =============================================================================
-def query_openai(messages, max_tokens=150, temperature=0.7):
+def query_academiccloud(messages, max_tokens=150, temperature=0.7):
     payload = {
         "model": MODEL_NAME,
         "messages": messages,
@@ -142,7 +142,7 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
                 {"role": "user", "content": prompt}
             ]
 
-            response = query_openai(messages, max_tokens=150)
+            response = query_academiccloud(messages, max_tokens=150)
 
             if not response:
                 st.error("❌ Keine Antwort vom LLM erhalten.")
