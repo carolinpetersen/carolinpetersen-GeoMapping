@@ -1,7 +1,7 @@
 # =============================================================================
 # 🌐 Campus-Navigationssystem – Web-App mit Streamlit (SICHER)
 # =============================================================================
-# Nutzt OpenAI-API (mit .env), OSMnx, Folium, Streamlit
+# Nutzt AcademicCloud-API (mit .env), OSMnx, Folium, Streamlit
 # Sicherheit: API-Key aus .env geladen
 # =============================================================================
 
@@ -32,12 +32,12 @@ API_URL = "https://chat-ai.academiccloud.de/v1"
 
 # Header
 headers = {
-    "Authorization": f"Bearer {OPENAI_API_KEY}",
+    "Authorization": f"Bearer {ACADEMICCLOUD_API_KEY}",
     "Content-Type": "application/json"
 }
 
 # =============================================================================
-# 1. Funktion: LLM über OpenAI-API aufrufen
+# 1. Funktion: LLM über AcademicCloud-API aufrufen
 # =============================================================================
 def query_openai(messages, max_tokens=150, temperature=0.7):
     payload = {
@@ -254,4 +254,4 @@ Beispiel:
 # 7. Footer
 # =============================================================================
 st.markdown("---")
-st.markdown("💡 *Entwickelt mit ❤️ für den Uni-Campus. OpenAI-API verwendet.*")
+st.markdown("💡 *Entwickelt mit ❤️ für den Uni-Campus. AcademicCloud-API verwendet.*")
