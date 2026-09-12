@@ -14,6 +14,7 @@ import osmnx as ox
 from streamlit_folium import st_folium
 from dotenv import load_dotenv
 import os
+from campus_orte import ORTE
 
 # 🔐 Lade Umgebungsvariablen (.env)
 load_dotenv()
