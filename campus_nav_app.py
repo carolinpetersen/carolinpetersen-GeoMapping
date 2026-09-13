@@ -211,7 +211,7 @@ with st.container():
     with col1:
         start_input = st.text_input("Startort", placeholder="Beschreibe wo du bist")
     with col2:
-        ziel_input = st.text_input("Zielort", placeholder="Wo willst du hin?")
+        ziel_input = st.text_input("Zielort", placeholder="Beschreibe wo du hin willst")
 
     submit = st.button("🔍 Route berechnen", type="primary", use_container_width=True)
 
