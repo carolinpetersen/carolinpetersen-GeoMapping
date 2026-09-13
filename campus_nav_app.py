@@ -16,6 +16,77 @@ from dotenv import load_dotenv
 import os
 from campus_orte import ORTE
 
+ort_bedeutungen = {
+    "Universitätsallee": ["Universitätsallee", "Universität", "Campus", "Hauptstraße", "Alle"],
+    "Radio Zusa": ["Radio", "Zusa", "Rundfunk", "Radio Zusa"],
+    "Taxistand UNI": ["Taxistand UNI", "Taxi", "Taxistand", "Taxi-Station", "Taxi-Platz"],
+    "KonRad Fahrrad-Selbsthilfe-Werkstatt": ["Fahrrad", "Konrad", "Werkstatt", "Reparatur", "Selbsthilfe"],
+    "PENNY": ["Supermarkt", "Einkauf", "Laden", "Geschäft", "Discounter", "PENNY", "Lebensmittel" ],
+    "Wichernstraße": ["Wichernstraße", "Straße", "Wichern"],
+    "Carl-von-Ossietzky-Straße": ["Carl-von-Ossietzky", "CVO"],
+    "Kindertagesstätte Campus": ["Kindertagesstätte", "Kita", "Kindergarten", "Kinder"],
+    "Studio 21": ["Studio 21", "Sport", "Fitness", "Workout", "Gym"],
+    "HairNews": ["Friseur", "Haare", "Friseur", "Haarschnitt"],
+    "Kruse - Der Lecker Bäcker": ["Bäcker", "Kruse", "Brot", "Kuchen", "Backwaren", "Brötchen"],
+    "Alexander Fritz GmbH": ["Firma", "Unternehmen", "Fritz", "GmbH"],
+    "planB": ["planB", "Büro", "Büro", "Planung"],
+    "Scharnhorststraße": ["Scharnhorst"],,
+    "Universitätsbibliothek": ["Bibliothek", "Bib", "Bücher", "Lernen", "BIB"],
+    "Blücherstraße": ["Blücherstraße", "Blücher"],
+    "Geschwister-Scholl-Haus": ["Geschwister-Scholl", "Haus", "GSH"],
+    "Zufahrt 1 Leuphana Universität Lüneburg": ["Zufahrt 1"],
+    "Klippo": ["Klippo", "Kiosk", "Laden", "Kiosk", "Snack", "Kaffee"],
+    "Zufahrt 2 Leuphana Universität Lüneburg": ["Zufahrt 2"],
+    "Zufahrt 3 Leuphana Universität Lüneburg": ["Zufahrt 3"],
+    "TRAFOS": ["TRAFOS", "Transformator", "Strom", "Energie"],
+    "Gondel": ["Gondel", "Kaffee"],
+    "Universität": ["Universität", "Campus", "Hauptgebäude", "Hauptgebäude"],
+    "Zentraler Campus": ["Campus"],
+    "Gneisenaustraße": ["Gneisenaustraße", "Gneisenau"],
+    "Gebäude 12": ["Gebäude 12", "12"],
+    "Gebäude 13": ["Gebäude 13", "13"],
+    "Hochschulsport": ["Sport","Turnhalle"],
+    "Leuphana Mensawiese": ["Mensawiese", "Wiese"],
+    "Gebäude 3": ["Gebäude 3", "3"],
+    "Erstsemesterwohnheim": ["Erstsemester", "Erstis", "Wohnheim", "Wohnung", "Studenten"],
+    "Scharnhorststraße": ["Scharnhorststraße", "Scharnhorst"],
+    "Heinrich-Böll-Straße": ["Heinrich-Böll", "Böll"],
+    "Gebäude 8": ["Gebäude 8", "8"],
+    "Mensa": ["Mensa", "Essen", "Mittagessen", "Kantine"],
+    "Initiativen-Räume": ["Initiativen", "Initiative"],
+    "Gebäude 25": ["Gebäude 25", "25"],
+    "Gebäude 27": ["Gebäude 27", "27"],
+    "Gebäude 1": ["Gebäude 1", "1"],
+    "Gebäude 10": ["Gebäude 10", "10"],
+    "Gebäude 11": ["Gebäude 11", "11"],
+    "Gebäude 14": ["Gebäude 14", "14"],
+    "Campus 1": ["Campus 1", "1"],
+    "Gebäude 16": ["Gebäude 16", "16"],
+    "Gebäude 19": ["Gebäude 19", "19"],
+    "Campus 2": ["Campus 2", "2"],
+    "Gebäude 22": ["Gebäude 22", "22"],
+    "Campus 3": ["Campus 3", "3"],
+    "Gebäude 4": ["Gebäude 4", "4"],
+    "Gebäude 5": ["Gebäude 5", "5"],
+    "Gebäude 6": ["Gebäude 6", "6"],
+    "Gebäude 7": ["Gebäude 7", "7"],
+    "Gebäude 9": ["Gebäude 9", "9"],
+    "Hörsaal 1": ["Hörsaal 1"],
+    "Hörsaal 2": ["Hörsaal 2"],
+    "Hörsaal 3": ["Hörsaal 3"],
+    "Hörsaal 5": ["Hörsaal 5"],
+    "Hörsaalgang": ["Hörsaalgang", "Hörsäle"],
+    "Laubgang": ["Laubgang"],
+    "Gebäude 26": ["Gebäude 26", "26"],
+    "Leuphana Universität Lüneburg Zentralgebäude C40": ["Zentralgebäude", "C40", "Zentral", "Hauptgebäude", "ZG"],
+    "Hörsaal 4": ["Hörsaal 4"],
+    "Biotopgarten": ["Biotopgarten", "Garten", "Pflanzen", "Natur", "Biotop", "Grünfläche", "grün"],
+    "Waldgarten Campus Lüneburg": ["Waldgarten", "Natur"],
+    "Biotopbeete": ["Biotopbeete", "Beete", "Pflanzen"],
+}
+
+bedeutungen = "\n".join([f"- {ort}: {', '.join(worte)}" for ort, worte in ort_bedeutungen.items()])
+
 # 🔐 Lade Umgebungsvariablen (.env)
 load_dotenv()
 
@@ -130,12 +201,16 @@ Du bist ein Campus-Navigationssystem. Analysiere die folgende Nutzereingabe und 
 - Zielort
 - Zusätzliche Anforderungen (z. B. barrierefrei, schnell)
 
+Wichtig: Verwende nur Orte aus der folgenden Liste:
+{bedeutungen}
+
 Nutzereingabe: "{start_input} nach {ziel_input}"
 
 Antworte **nur** in diesem Format:
 Start: [Ort]
 Ziel: [Ort]
 Anforderungen: [Liste, z. B. barrierefrei, schnell]
+
 """
 
             messages = [

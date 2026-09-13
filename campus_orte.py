@@ -1,7 +1,6 @@
 ORTE = {
     "Universitätsallee": (53.2300910, 10.4052614),
     "Radio Zusa": (53.2287663, 10.4021257),
-    "Scharnhorststraße/DJH": (53.2299765, 10.3971986),
     "Taxistand UNI": (53.2301307, 10.4015167),
     "KonRad Fahrrad-Selbsthilfe-Werkstatt": (53.2296613, 10.3988148),
     "PENNY": (53.2272156, 10.4014979),
@@ -18,13 +17,11 @@ ORTE = {
     "Universitätsbibliothek": (53.2278925, 10.4007373),
     "Blücherstraße": (53.2302074, 10.4000929),
     "Geschwister-Scholl-Haus": (53.2271206, 10.3989129),
-    "Leuphana Universität Lüneburg": (53.2284976, 10.4052025),
     "Zufahrt 1 Leuphana Universität Lüneburg": (53.2278115, 10.4054323),
     "Klippo": (53.2284523, 10.4038461),
     "Zufahrt 2 Leuphana Universität Lüneburg": (53.2301172, 10.4030641),
     "Zufahrt 3 Leuphana Universität Lüneburg": (53.2299117, 10.3972238),
     "TRAFOS": (53.2281466, 10.4022072),
-    "Universitätsallee / Zentralgebäude": (53.2287834, 10.4045440),
     "Gondel": (53.2293030, 10.4015240),
     "Universität": (53.2285073, 10.4025380),
     "Zentraler Campus": (53.2291591, 10.4019932),
@@ -69,5 +66,4 @@ ORTE = {
     "Biotopgarten": (53.2291473, 10.4038307),
     "Waldgarten Campus Lüneburg": (53.2283894, 10.4000830),
     "Biotopbeete": (53.2292369, 10.4033043),
-    "Gebäude 41": (53.2287437, 10.4025635),
 }
