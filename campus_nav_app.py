@@ -165,6 +165,27 @@ def finde_ort(suchbegriff, orte):
     return None
 
 # =============================================================================
+# Funktion: Straßennamen entlang der Route extrahieren
+# =============================================================================
+def route_strassen(G, route):
+    """
+    Extrahiert die Straßennamen entlang der berechneten Route,
+    ohne Duplikate direkt hintereinander.
+    """
+    strassen = []
+    for u, v in zip(route[:-1], route[1:]):
+        data = G.get_edge_data(u, v)
+        if data:
+            # Bei mehreren parallelen Kanten: erste nehmen
+            edge = data[0] if 0 in data else list(data.values())[0]
+            name = edge.get("name", None)
+            if name:
+                if isinstance(name, list):
+                    name = name[0]
+                if not strassen or strassen[-1] != name:
+                    strassen.append(name)
+    return strassen
+# =============================================================================
 # 4. Haupt-App (Streamlit)
 # =============================================================================
 st.set_page_config(
@@ -285,6 +306,13 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
                             st.error(f"❌ Fehler bei Routing: {e}")
                             st.stop()
 
+                     # Straßennamen entlang der Route extrahieren
+                        strassen_liste = route_strassen(G, route)
+                        if strassen_liste:
+                            strassen_text = ", ".join(strassen_liste)
+                        else:
+                            strassen_text = "keine benannten Straßen gefunden"
+
                         st.info("🎨 Erstelle Karte...")
                         try:
                             m = folium.Map(location=[start_lat, start_lon], zoom_start=17)
@@ -309,8 +337,19 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
                             ).add_to(m)
 
                             beschreibung_prompt = f"""
-Du bist ein Campus-Navigationssystem. Erstelle eine klare, schrittweise Wegbeschreibung von {start_ort} nach {ziel_ort}.
-Verwende einfache Sprache. Gib nur die Anweisungen (keine Überschriften).
+Du bist ein Campus-Navigationssystem für den Leuphana-Campus in Lüneburg.
+
+Erstelle eine klare, schrittweise Wegbeschreibung von "{start_ort}" nach "{ziel_ort}".
+
+WICHTIG:
+- Verwende AUSSCHLIESSLICH die folgenden real existierenden Straßen/Wege der Route, in dieser Reihenfolge: {strassen_text}
+- Erfinde KEINE zusätzlichen Details wie Ampeln, Kreuzungen, Geschäfte oder Gebäude, die nicht genannt wurden.
+- Gib nur kurze, klare Anweisungen basierend auf den genannten Straßen.
+- Keine Einleitung, keine Überschrift, nur nummerierte Schritte.
+
+Beispiel für das Format:
+1. Starten Sie bei {start_ort} und folgen Sie {strassen_liste[0] if strassen_liste else "dem Weg"}.
+2. Folgen Sie weiter bis {ziel_ort}.
 """
 
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
