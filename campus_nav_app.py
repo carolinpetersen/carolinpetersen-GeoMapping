@@ -313,7 +313,7 @@ Beispiel:
 """
 
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
-                                beschreibung = query_openai(
+                                beschreibung = query_academiccloud(
                                     messages=[
                                         {"role": "system", "content": "Du bist ein freundlicher, präziser Wegweiser für einen Uni-Campus."},
                                         {"role": "user", "content": beschreibung_prompt}
