@@ -194,8 +194,8 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🗺️ Campus-Navigationssystem")
-st.markdown("💡 Einfach Start und Ziel eingeben – wir finden die beste Route!")
+st.title("🗺️ Leupht-wohin?")
+st.markdown("💡 Ich berechne die beste Route!")
 
 # =============================================================================
 # 5. Eingabebereich
@@ -205,13 +205,13 @@ if "route_data" not in st.session_state:
     st.session_state.route_data = None
 
 with st.container():
-    st.subheader("📍 Woher und wohin?")
+    st.subheader("📍 Wo bist du und wo willst du hin?")
     col1, col2 = st.columns(2)
 
     with col1:
-        start_input = st.text_input("Startort", placeholder="z. B. Mensa, Hauptgebäude")
+        start_input = st.text_input("Startort", placeholder="Beschreibe wo du bist")
     with col2:
-        ziel_input = st.text_input("Zielort", placeholder="z. B. Hochschulsport, Rechenzentrum")
+        ziel_input = st.text_input("Zielort", placeholder="Wo willst du hin?")
 
     submit = st.button("🔍 Route berechnen", type="primary", use_container_width=True)
 
