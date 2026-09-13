@@ -224,20 +224,24 @@ if submit:
     else:
         with st.spinner("🧠 Fragt LLM (OpenAI) ab..."):
             prompt = f"""
-Du bist ein Campus-Navigationssystem. Analysiere die folgende Nutzereingabe und extrahiere:
-- Startort
-- Zielort
-- Zusätzliche Anforderungen (z. B. barrierefrei, schnell)
+Du bekommst zwei GETRENNTE Eingabefelder von einem Nutzer eines Campus-Navigationssystems:
 
-Wichtig: Verwende nur Orte aus der folgenden Liste:
+STARTFELD (Text aus dem Eingabefeld "Startort"): "{start_input}"
+ZIELFELD (Text aus dem Eingabefeld "Zielort"): "{ziel_input}"
+
+Ordne JEDEM Feld GENAU EINEN passenden Ort aus der folgenden Liste zu:
 {bedeutungen}
 
-Nutzereingabe: "{start_input} nach {ziel_input}"
+WICHTIG:
+- Das STARTFELD bestimmt IMMER den Start.
+- Das ZIELFELD bestimmt IMMER das Ziel.
+- Vertausche NIEMALS Start und Ziel, egal wie die Eingabe formuliert ist.
+- Zusätzliche Anforderungen (z. B. barrierefrei, schnell) kannst du aus beiden Feldern erkennen.
 
 Antworte **nur** in diesem Format:
-Start: [Ort]
-Ziel: [Ort]
-Anforderungen: [Liste, z. B. barrierefrei, schnell]
+Start: [Ort für STARTFELD]
+Ziel: [Ort für ZIELFELD]
+Anforderungen: [Liste, z. B. barrierefrei, schnell]
 
 """
 
