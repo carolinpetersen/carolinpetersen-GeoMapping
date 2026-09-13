@@ -345,7 +345,13 @@ if st.session_state.route_data:
     data = st.session_state.route_data
     st.subheader("📝 Sprachliche Wegbeschreibung")
     st.markdown(data["beschreibung"])
-    st_folium(data["map"], width=800, height=500)
+    st_folium(
+        data["map"],
+        width=800,
+        height=500,
+        key="route_map",
+        returned_objects=[]
+    )
 
 # =============================================================================
 # 7. Footer
