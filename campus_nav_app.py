@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 import os
 from campus_orte import ORTE
 
+
+
 ort_bedeutungen = {
     "Universitätsallee": ["Universitätsallee", "Universität", "Campus", "Hauptstraße", "Alle"],
     "Radio Zusa": ["Radio", "Zusa", "Rundfunk", "Radio Zusa"],
@@ -177,6 +179,10 @@ st.markdown("💡 Einfach Start und Ziel eingeben – wir finden die beste Route
 # =============================================================================
 # 5. Eingabebereich
 # =============================================================================
+# ✅ NEU: Session State initialisieren
+if "route_data" not in st.session_state:
+    st.session_state.route_data = None
+
 with st.container():
     st.subheader("📍 Woher und wohin?")
     col1, col2 = st.columns(2)
@@ -305,11 +311,6 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
                             beschreibung_prompt = f"""
 Du bist ein Campus-Navigationssystem. Erstelle eine klare, schrittweise Wegbeschreibung von {start_ort} nach {ziel_ort}.
 Verwende einfache Sprache. Gib nur die Anweisungen (keine Überschriften).
-
-Beispiel:
-1. Gehen Sie aus der Mensa heraus und folgen Sie der Hauptstraße.
-2. Biegen Sie links an der Bibliothek ab.
-3. Gehen Sie geradeaus bis zum Hochschulsport.
 """
 
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
@@ -322,19 +323,29 @@ Beispiel:
                                 )
 
                             if beschreibung:
-                                st.subheader("📝 Sprachliche Wegbeschreibung")
-                                st.markdown(beschreibung)
-
                                 folium.Marker(
                                     [start_lat, start_lon],
                                     popup=f"Start: {start_ort}<br><small>{beschreibung}</small>",
                                     icon=folium.Icon(color="green", icon="play")
                                 ).add_to(m)
 
-                            st_folium(m, width=800, height=500)
+                            st.session_state.route_data = {
+                                "map": m,
+                                "beschreibung": beschreibung,
+                                "start_ort": start_ort,
+                                "ziel_ort": ziel_ort
+                            }
 
                         except Exception as e:
                             st.error(f"❌ Fehler bei Karten-Erstellung: {e}")
+# =============================================================================
+# ✅ NEU: Zeige gespeicherte Ergebnisse an (bleibt auch nach Streamlit-Reruns bestehen)
+# =============================================================================
+if st.session_state.route_data:
+    data = st.session_state.route_data
+    st.subheader("📝 Sprachliche Wegbeschreibung")
+    st.markdown(data["beschreibung"])
+    st_folium(data["map"], width=800, height=500)
 
 # =============================================================================
 # 7. Footer
