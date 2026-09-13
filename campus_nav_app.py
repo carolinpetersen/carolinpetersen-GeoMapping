@@ -195,7 +195,7 @@ st.set_page_config(
 )
 
 st.title("🗺️ Leupht-wohin?")
-st.markdown("Das beste (und einzige) Campus-Navigationssystem!")
+st.markdown("Das beste (und einzige) Campus-Navigationssystem für die Leuphana Uni!")
 
 # =============================================================================
 # 5. Eingabebereich
