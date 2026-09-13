@@ -30,7 +30,7 @@ ort_bedeutungen = {
     "Kruse - Der Lecker Bäcker": ["Bäcker", "Kruse", "Brot", "Kuchen", "Backwaren", "Brötchen"],
     "Alexander Fritz GmbH": ["Firma", "Unternehmen", "Fritz", "GmbH"],
     "planB": ["planB", "Büro", "Büro", "Planung"],
-    "Scharnhorststraße": ["Scharnhorst"],,
+    "Scharnhorststraße": ["Scharnhorst"],
     "Universitätsbibliothek": ["Bibliothek", "Bib", "Bücher", "Lernen", "BIB"],
     "Blücherstraße": ["Blücherstraße", "Blücher"],
     "Geschwister-Scholl-Haus": ["Geschwister-Scholl", "Haus", "GSH"],
