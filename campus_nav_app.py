@@ -247,7 +247,7 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
 
                         st.info("📥 Lade Kartendaten...")
                         try:
-                            G = ox.graph_from_xml("map-3.osm")
+                            G = ox.graph_from_xml("map-3.osm", simplify=False, retain_all=False, crs="EPSG:3857")
                             st.success("✅ Kartendaten geladen.")
                         except Exception as e:
                             st.error(f"❌ Fehler beim Laden der Karte: {e}")
