@@ -11,6 +11,7 @@ import json
 import networkx as nx
 import folium
 import osmnx as ox
+import pyproj
 from streamlit_folium import st_folium
 from dotenv import load_dotenv
 import os
@@ -247,7 +248,7 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
 
                         st.info("📥 Lade Kartendaten...")
                         try:
-                            G = ox.graph_from_xml("map-3.osm", simplify=False, retain_all=False, crs="EPSG:3857")
+                            G = ox.graph_from_xml("map-3.osm")
                             st.success("✅ Kartendaten geladen.")
                         except Exception as e:
                             st.error(f"❌ Fehler beim Laden der Karte: {e}")
@@ -255,8 +256,17 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
 
                         st.info("🔍 Suche Wegpunkte...")
                         try:
-                            orig = ox.nearest_nodes(G, start_lon, start_lat)
-                            dest = ox.nearest_nodes(G, ziel_lon, ziel_lat)
+                            # Graph projizieren (nutzt pyproj, KEIN scikit-learn)
+                            G_proj = ox.project_graph(G)
+                            zielcrs = G_proj.graph["crs"]
+
+                            transformer = pyproj.Transformer.from_crs("EPSG:4326", zielcrs, always_xy=True)
+                            start_x, start_y = transformer.transform(start_lon, start_lat)
+                            ziel_x, ziel_y = transformer.transform(ziel_lon, ziel_lat)
+
+                            # Nutzt scipy cKDTree (kein scikit-learn nötig)
+                            orig = ox.nearest_nodes(G_proj, start_x, start_y)
+                            dest = ox.nearest_nodes(G_proj, ziel_x, ziel_y)
                         except Exception as e:
                             st.error(f"❌ Fehler bei Knotensuche: {e}")
                             st.stop()
