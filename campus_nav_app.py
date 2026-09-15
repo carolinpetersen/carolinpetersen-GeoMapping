@@ -16,6 +16,7 @@ from streamlit_folium import st_folium
 from dotenv import load_dotenv
 import os
 from campus_orte import ORTE
+import math
 
 
 
@@ -185,6 +186,135 @@ def route_strassen(G, route):
                 if not strassen or strassen[-1] != name:
                     strassen.append(name)
     return strassen
+
+# =============================================================================
+# Funktion: Kompasswinkel (Bearing) zwischen zwei Punkten berechnen
+# =============================================================================
+def bearing(x1, y1, x2, y2):
+    delta_x = x2 - x1
+    delta_y = y2 - y1
+    angle = math.degrees(math.atan2(delta_x, delta_y))  # 0° = Norden, 90° = Osten
+    return angle % 360
+
+
+# =============================================================================
+# Funktion: Abbiegerichtung zwischen zwei Bearings bestimmen
+# =============================================================================
+def abbiege_richtung(bearing_vorher, bearing_nachher, schwelle=25):
+    diff = (bearing_nachher - bearing_vorher + 180) % 360 - 180
+    if diff > schwelle:
+        return "rechts"
+    elif diff < -schwelle:
+        return "links"
+    else:
+        return None  # keine relevante Richtungsänderung
+
+
+# =============================================================================
+# Funktion: Auf welcher Seite liegt ein Punkt relativ zur Gehrichtung?
+# =============================================================================
+def seite_von_punkt(x1, y1, x2, y2, px, py):
+    cross = (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+    if cross > 0:
+        return "links"
+    elif cross < 0:
+        return "rechts"
+    else:
+        return "direkt auf dem Weg"
+
+
+# =============================================================================
+# Funktion: Abbiegungen entlang der gesamten Route berechnen
+# =============================================================================
+def berechne_abbiegungen(G_proj, route, schwelle=25, min_abstand=15):
+    koordinaten = [(G_proj.nodes[n]["x"], G_proj.nodes[n]["y"]) for n in route]
+    abbiegungen = []
+    i = 1
+
+    while i < len(koordinaten) - 1:
+        x1, y1 = koordinaten[i - 1]
+        x2, y2 = koordinaten[i]
+        x3, y3 = koordinaten[i + 1]
+
+        dist_vor = math.hypot(x2 - x1, y2 - y1)
+        dist_nach = math.hypot(x3 - x2, y3 - y2)
+        if dist_vor < min_abstand or dist_nach < min_abstand:
+            i += 1
+            continue
+
+        b_vor = bearing(x1, y1, x2, y2)
+        b_nach = bearing(x2, y2, x3, y3)
+        richtung = abbiege_richtung(b_vor, b_nach, schwelle)
+
+        if richtung:
+            abbiegungen.append((i, richtung))
+
+        i += 1
+
+    return abbiegungen
+
+
+# =============================================================================
+# Funktion: Orte entlang der Route MIT Seitenangabe (links/rechts) finden
+# =============================================================================
+def orte_entlang_route_mit_seite(G_proj, route, orte, transformer, max_distance=40, ausschluss=None):
+    if ausschluss is None:
+        ausschluss = []
+
+    koordinaten = [(G_proj.nodes[n]["x"], G_proj.nodes[n]["y"]) for n in route]
+    gefunden = []
+
+    for name, (lat, lon) in orte.items():
+        if name in ausschluss:
+            continue
+
+        ort_x, ort_y = transformer.transform(lon, lat)
+
+        bester_index = None
+        beste_distanz = float("inf")
+
+        for i in range(len(koordinaten) - 1):
+            x1, y1 = koordinaten[i]
+            x2, y2 = koordinaten[i + 1]
+            d1 = math.hypot(x1 - ort_x, y1 - ort_y)
+            d2 = math.hypot(x2 - ort_x, y2 - ort_y)
+            d = min(d1, d2)
+
+            if d < beste_distanz:
+                beste_distanz = d
+                bester_index = i
+
+        if bester_index is not None and beste_distanz <= max_distance:
+            x1, y1 = koordinaten[bester_index]
+            x2, y2 = koordinaten[bester_index + 1]
+            seite = seite_von_punkt(x1, y1, x2, y2, ort_x, ort_y)
+            gefunden.append((bester_index, name, seite))
+
+    gefunden.sort(key=lambda tup: tup[0])
+
+    ergebnis = []
+    for index, name, seite in gefunden:
+        if not ergebnis or ergebnis[-1][1] != name:
+            ergebnis.append((index, name, seite))
+
+    return ergebnis
+
+
+# =============================================================================
+# Funktion: Abbiegungen + Orte in echter Reihenfolge kombinieren
+# =============================================================================
+def kombiniere_ereignisse(abbiegungen, orte_mit_seite):
+    ereignisse = []
+
+    for index, richtung in abbiegungen:
+        ereignisse.append((index, f"An dieser Stelle {richtung} abbiegen"))
+
+    for index, name, seite in orte_mit_seite:
+        ereignisse.append((index, f"Vorbei an '{name}' (liegt auf der {seite}en Seite)"))
+
+    ereignisse.sort(key=lambda tup: tup[0])
+
+    return [text for _, text in ereignisse]
 
 # =============================================================================
 # Funktion: Orte entlang der Route finden (in der richtigen Reihenfolge!)
@@ -364,12 +494,29 @@ Ziel: [Ort]
                             st.error(f"❌ Fehler bei Routing: {e}")
                             st.stop()
 
-                     # Straßennamen entlang der Route extrahieren
+                                        # Straßennamen entlang der Route extrahieren
                         strassen_liste = route_strassen(G, route)
                         if strassen_liste:
                             strassen_text = ", ".join(strassen_liste)
                         else:
                             strassen_text = "keine benannten Straßen gefunden"
+
+                        # Abbiegungen berechnen (basiert auf echter Geometrie!)
+                        abbiegungen = berechne_abbiegungen(G_proj, route, schwelle=25, min_abstand=15)
+
+                        # Orte MIT Seitenangabe entlang der Route finden
+                        orte_mit_seite = orte_entlang_route_mit_seite(
+                            G_proj, route, ORTE, transformer,
+                            max_distance=40,
+                            ausschluss=[start_ort, ziel_ort]
+                        )
+
+                        # Alles in echter Reihenfolge kombinieren
+                        ereignisse_liste = kombiniere_ereignisse(abbiegungen, orte_mit_seite)
+                        if ereignisse_liste:
+                            ereignisse_text = "\n".join(f"- {e}" for e in ereignisse_liste)
+                        else:
+                            ereignisse_text = "- Direkter Weg ohne markante Abbiegungen oder Orientierungspunkte"
 
                       # Orte entlang der Route finden (in echter Reihenfolge!)
                         orte_auf_weg = orte_entlang_route(
@@ -410,20 +557,20 @@ Du bist ein Campus-Navigationssystem für den Leuphana-Campus in Lüneburg.
 
 Erstelle eine klare, schrittweise Wegbeschreibung von "{start_ort}" nach "{ziel_ort}".
 
-FAKTEN ZUR ROUTE (nutze NUR diese Informationen):
-- Straßen/Wege der Route, in Reihenfolge: {strassen_text}
-- Reale Orte/Gebäude, an denen man auf dem Weg vorbeikommt, in Reihenfolge: {orte_text}
+FAKTEN ZUR ROUTE (in exakter Reihenfolge, wie man sie auf dem Weg erlebt):
+{ereignisse_text}
 
 WICHTIG:
-- Baue die genannten Orte als Orientierungspunkte in die Beschreibung ein (z. B. "gehen Sie an {orte_auf_weg[0] if orte_auf_weg else '...'} vorbei").
-- Erfinde KEINE zusätzlichen Details wie Ampeln, Kreuzungen, Geschäfte oder Gebäude, die NICHT oben genannt wurden.
-- Gib nur kurze, klare, nummerierte Anweisungen.
-- Keine Einleitung, keine Überschrift.
+- Nutze AUSSCHLIESSLICH die oben genannten Fakten – in genau dieser Reihenfolge.
+- Erfinde KEINE zusätzlichen Abbiegungen, Seitenangaben (links/rechts) oder Objekte, die nicht oben stehen.
+- Formuliere die Fakten in natürliche, freundliche Wegbeschreibungs-Sprache um.
+- Gib nur nummerierte Schritte aus, keine Einleitung, keine Überschrift.
 
-Beispiel für den Stil (nicht den Inhalt!):
-1. Starten Sie bei {start_ort}.
-2. Gehen Sie an [Ort aus der Liste] vorbei.
-3. Biegen Sie ab und folgen Sie dem Weg bis {ziel_ort}.
+Beispiel für den STIL (nicht den Inhalt!):
+1. Starten Sie bei {start_ort} und gehen Sie geradeaus.
+2. Nach kurzer Zeit biegen Sie rechts ab.
+3. Sie kommen an [Ort] vorbei, der auf der linken Seite liegt.
+4. Folgen Sie dem Weg weiter bis {ziel_ort}.
 """
 
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
