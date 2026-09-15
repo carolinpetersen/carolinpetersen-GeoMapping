@@ -100,7 +100,7 @@ if not ACADEMICCLOUD_API_KEY:
     st.stop()
 
 # Modell
-MODEL_NAME = "meta-llama-3.1-8b-instruct"
+MODEL_NAME = "qwen3.6-35b-a3b"
 
 # API-Endpunkt
 API_URL = "https://chat-ai.academiccloud.de/v1/chat/completions"
@@ -114,7 +114,7 @@ headers = {
 # =============================================================================
 # 1. Funktion: LLM über AcademicCloud-API aufrufen
 # =============================================================================
-def query_academiccloud(messages, max_tokens=150, temperature=0.7):
+def query_academiccloud(messages, max_tokens=50000, temperature=0.7):
     payload = {
         "model": MODEL_NAME,
         "messages": messages,
@@ -185,6 +185,60 @@ def route_strassen(G, route):
                 if not strassen or strassen[-1] != name:
                     strassen.append(name)
     return strassen
+
+# =============================================================================
+# Funktion: Orte entlang der Route finden (in der richtigen Reihenfolge!)
+# =============================================================================
+def orte_entlang_route(G_proj, route, orte, transformer, max_distance=20, ausschluss=None):
+    """
+    Findet Orte aus 'orte' (campus_orte.py), die nahe an der berechneten Route liegen.
+    Gibt sie SORTIERT zurück - in der Reihenfolge, wie man an ihnen vorbeikommt.
+    
+    max_distance = wie nah (in Metern) ein Ort an der Route sein muss, um "gezählt" zu werden
+    ausschluss = Namen, die NICHT in der Liste erscheinen sollen (z.B. Start & Ziel selbst)
+    """
+    if ausschluss is None:
+        ausschluss = []
+
+    # Koordinaten der Route in Metern (projiziert) sammeln
+    route_punkte = []
+    for node in route:
+        x = G_proj.nodes[node]["x"]
+        y = G_proj.nodes[node]["y"]
+        route_punkte.append((x, y))
+
+    gefundene_orte = []  # Liste von (Position_auf_Route, Name, Distanz)
+
+    for name, (lat, lon) in orte.items():
+        if name in ausschluss:
+            continue
+
+        # Ort-Koordinaten in dieselbe Projektion umwandeln wie die Route
+        ort_x, ort_y = transformer.transform(lon, lat)
+
+        # Kürzeste Distanz zu irgendeinem Punkt der Route berechnen
+        min_dist = float("inf")
+        min_index = None
+        for i, (rx, ry) in enumerate(route_punkte):
+            dist = ((rx - ort_x) ** 2 + (ry - ort_y) ** 2) ** 0.5
+            if dist < min_dist:
+                min_dist = dist
+                min_index = i
+
+        # Nur behalten, wenn nah genug an der Route
+        if min_dist <= max_distance:
+            gefundene_orte.append((min_index, name, min_dist))
+
+    # Nach Position entlang der Route sortieren (wichtig für richtige Reihenfolge!)
+    gefundene_orte.sort(key=lambda tup: tup[0])
+
+    # Namen extrahieren, Duplikate direkt hintereinander vermeiden
+    ergebnis = []
+    for _, name, _ in gefundene_orte:
+        if not ergebnis or ergebnis[-1] != name:
+            ergebnis.append(name)
+
+    return ergebnis
 # =============================================================================
 # 4. Haupt-App (Streamlit)
 # =============================================================================
@@ -237,16 +291,20 @@ Nutzereingabe: "{start_input} nach {ziel_input}"
 Antworte **nur** in diesem Format:
 Start: [Ort]
 Ziel: [Ort]
-Anforderungen: [Liste, z. B. barrierefrei, schnell]
 
 """
+#wenn mehrer Bedeutungen, dann für jede davon einen Weg berechnen und danach den lürzesten auswählen
+#wenn es diese Bedeutung nicht gibt, dann Fehlermeldung
+        
+
+            
 
             messages = [
                 {"role": "system", "content": "Du bist ein präziser Campus-Navigationssystem. Gib nur die Antwort im vorgegebenen Format aus."},
                 {"role": "user", "content": prompt}
             ]
 
-            response = query_academiccloud(messages, max_tokens=150)
+            response = query_academiccloud(messages, max_tokens=50000)
 
             if not response:
                 st.error("❌ Keine Antwort vom LLM erhalten.")
@@ -313,6 +371,17 @@ Anforderungen: [Liste, z. B. barrierefrei, schnell]
                         else:
                             strassen_text = "keine benannten Straßen gefunden"
 
+                      # Orte entlang der Route finden (in echter Reihenfolge!)
+                        orte_auf_weg = orte_entlang_route(
+                            G_proj, route, ORTE, transformer,
+                            max_distance=20,
+                            ausschluss=[start_ort, ziel_ort]
+                        )
+                        if orte_auf_weg:
+                            orte_text = ", ".join(orte_auf_weg)
+                        else:
+                            orte_text = "keine markanten Orte in der Nähe der Route gefunden"
+
                         st.info("🎨 Erstelle Karte...")
                         try:
                             m = folium.Map(location=[start_lat, start_lon], zoom_start=17)
@@ -341,15 +410,20 @@ Du bist ein Campus-Navigationssystem für den Leuphana-Campus in Lüneburg.
 
 Erstelle eine klare, schrittweise Wegbeschreibung von "{start_ort}" nach "{ziel_ort}".
 
-WICHTIG:
-- Verwende AUSSCHLIESSLICH die folgenden real existierenden Straßen/Wege der Route, in dieser Reihenfolge: {strassen_text}
-- Erfinde KEINE zusätzlichen Details wie Ampeln, Kreuzungen, Geschäfte oder Gebäude, die nicht genannt wurden.
-- Gib nur kurze, klare Anweisungen basierend auf den genannten Straßen.
-- Keine Einleitung, keine Überschrift, nur nummerierte Schritte.
+FAKTEN ZUR ROUTE (nutze NUR diese Informationen):
+- Straßen/Wege der Route, in Reihenfolge: {strassen_text}
+- Reale Orte/Gebäude, an denen man auf dem Weg vorbeikommt, in Reihenfolge: {orte_text}
 
-Beispiel für das Format:
-1. Starten Sie bei {start_ort} und folgen Sie {strassen_liste[0] if strassen_liste else "dem Weg"}.
-2. Folgen Sie weiter bis {ziel_ort}.
+WICHTIG:
+- Baue die genannten Orte als Orientierungspunkte in die Beschreibung ein (z. B. "gehen Sie an {orte_auf_weg[0] if orte_auf_weg else '...'} vorbei").
+- Erfinde KEINE zusätzlichen Details wie Ampeln, Kreuzungen, Geschäfte oder Gebäude, die NICHT oben genannt wurden.
+- Gib nur kurze, klare, nummerierte Anweisungen.
+- Keine Einleitung, keine Überschrift.
+
+Beispiel für den Stil (nicht den Inhalt!):
+1. Starten Sie bei {start_ort}.
+2. Gehen Sie an [Ort aus der Liste] vorbei.
+3. Biegen Sie ab und folgen Sie dem Weg bis {ziel_ort}.
 """
 
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
@@ -358,7 +432,7 @@ Beispiel für das Format:
                                         {"role": "system", "content": "Du bist ein freundlicher, präziser Wegweiser für einen Uni-Campus."},
                                         {"role": "user", "content": beschreibung_prompt}
                                     ],
-                                    max_tokens=200
+                                    max_tokens=50000
                                 )
 
                             if beschreibung:
