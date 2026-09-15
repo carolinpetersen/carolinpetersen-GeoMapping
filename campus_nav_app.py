@@ -226,7 +226,7 @@ def seite_von_punkt(x1, y1, x2, y2, px, py):
 # =============================================================================
 # Funktion: Abbiegungen entlang der gesamten Route berechnen
 # =============================================================================
-def berechne_abbiegungen(G_proj, route, schwelle=25, min_abstand=15):
+def berechne_abbiegungen(G_proj, route, schwelle=45, min_abstand=30):
     koordinaten = [(G_proj.nodes[n]["x"], G_proj.nodes[n]["y"]) for n in route]
     abbiegungen = []
     i = 1
