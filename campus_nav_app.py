@@ -91,6 +91,43 @@ ort_bedeutungen = {
 
 bedeutungen = "\n".join([f"- {ort}: {', '.join(worte)}" for ort, worte in ort_bedeutungen.items()])
 
+# =============================================================================
+# Manuell festgelegte Landmarken: Nur DIESE Orte werden in der Wegbeschreibung
+# als "vorbei an..." genannt (große, gut sichtbare Gebäude/Orte)
+# =============================================================================
+LANDMARKEN = [
+    "Mensa",
+    "Universitätsbibliothek",
+    "Hochschulsport",
+    "Leuphana Universität Lüneburg Zentralgebäude C40",
+    "PENNY",
+    "Erstsemesterwohnheim",
+    "Studio 21",
+    "Kindertagesstätte Campus",
+    "Biotopgarten",
+    "Gebäude 1",
+    "Gebäude 3",
+    "Gebäude 4",
+    "Gebäude 5",
+    "Gebäude 6",
+    "Gebäude 7",
+    "Gebäude 8",
+    "Gebäude 9",
+    "Gebäude 10",
+    "Gebäude 11",
+    "Gebäude 12",
+    "Gebäude 13",
+    "Gebäude 14",
+    "Gebäude 16",
+    "Gebäude 19",
+    "Gebäude 22",
+    "Gebäude 25",
+    "Gebäude 26",
+    "Gebäude 27",
+    "Gebäude 40",
+    # ➕ Hier kannst du jederzeit weitere Orte ergänzen oder welche entfernen
+]
+
 # 🔐 Lade Umgebungsvariablen (.env)
 load_dotenv()
 
@@ -265,7 +302,7 @@ def orte_entlang_route_mit_seite(G_proj, route, orte, transformer, max_distance=
     gefunden = []
 
     for name, (lat, lon) in orte.items():
-        if name in ausschluss:
+        if name not in LANDMARKEN or name in ausschluss:
             continue
 
         ort_x, ort_y = transformer.transform(lon, lat)
@@ -406,7 +443,7 @@ if submit:
     if not start_input or not ziel_input:
         st.warning("Bitte gib Start- und Zielort ein.")
     else:
-        with st.spinner("🧠 Fragt LLM (OpenAI) ab..."):
+        with st.spinner("🧠 Fragt LLM (AcademicCloud) ab..."):
             prompt = f"""
 Du bist ein Campus-Navigationssystem. Analysiere die folgende Nutzereingabe und extrahiere:
 - Startort
@@ -560,17 +597,19 @@ Erstelle eine klare, schrittweise Wegbeschreibung von "{start_ort}" nach "{ziel_
 FAKTEN ZUR ROUTE (in exakter Reihenfolge, wie man sie auf dem Weg erlebt):
 {ereignisse_text}
 
-WICHTIG:
-- Nutze AUSSCHLIESSLICH die oben genannten Fakten – in genau dieser Reihenfolge.
-- Erfinde KEINE zusätzlichen Abbiegungen, Seitenangaben (links/rechts) oder Objekte, die nicht oben stehen.
-- Formuliere die Fakten in natürliche, freundliche Wegbeschreibungs-Sprache um.
-- Gib nur nummerierte Schritte aus, keine Einleitung, keine Überschrift.
+STRIKTE REGELN:
+1. JEDE Abbiegung aus der obigen Liste MUSS in der Beschreibung vorkommen - lasse KEINE weg.
+2. Nenne bei jeder Abbiegung IMMER die Richtung (links oder rechts), niemals nur "biegen Sie ab".
+3. Nenne NUR die oben aufgeführten Orte als Orientierungspunkte - keine weiteren Gebäude oder Objekte erfinden.
+4. Wenn kein Ort in der Nähe einer Abbiegung genannt ist, beschreibe nur die Abbiegung selbst (z. B. "Biegen Sie rechts ab").
+5. Erfinde KEINE Ampeln, Kreuzungen, Straßennamen oder Details, die nicht oben stehen.
+6. Gib NUR nummerierte Schritte aus - keine Einleitung, keine Überschrift, keine Zusammenfassung am Ende.
 
 Beispiel für den STIL (nicht den Inhalt!):
 1. Starten Sie bei {start_ort} und gehen Sie geradeaus.
-2. Nach kurzer Zeit biegen Sie rechts ab.
+2. Biegen Sie rechts ab.
 3. Sie kommen an [Ort] vorbei, der auf der linken Seite liegt.
-4. Folgen Sie dem Weg weiter bis {ziel_ort}.
+4. Biegen Sie links ab und folgen Sie dem Weg bis {ziel_ort}.
 """
 
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
