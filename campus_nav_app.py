@@ -114,7 +114,7 @@ headers = {
 # =============================================================================
 # 1. Funktion: LLM über AcademicCloud-API aufrufen
 # =============================================================================
-def query_academiccloud(messages, max_tokens=50000, temperature=0.7):
+def query_academiccloud(messages, max_tokens=5000, temperature=0.7):
     payload = {
         "model": MODEL_NAME,
         "messages": messages,
@@ -304,7 +304,7 @@ Ziel: [Ort]
                 {"role": "user", "content": prompt}
             ]
 
-            response = query_academiccloud(messages, max_tokens=50000)
+            response = query_academiccloud(messages, max_tokens=5000)
 
             if not response:
                 st.error("❌ Keine Antwort vom LLM erhalten.")
@@ -432,7 +432,7 @@ Beispiel für den Stil (nicht den Inhalt!):
                                         {"role": "system", "content": "Du bist ein freundlicher, präziser Wegweiser für einen Uni-Campus."},
                                         {"role": "user", "content": beschreibung_prompt}
                                     ],
-                                    max_tokens=50000
+                                    max_tokens=5000
                                 )
 
                             if beschreibung:
