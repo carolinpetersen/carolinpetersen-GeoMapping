@@ -290,7 +290,25 @@ def berechne_abbiegungen(G_proj, route, schwelle=45, min_abstand=30):
 
     return abbiegungen
 
+# =============================================================================
+# Hilfsfunktion: Echter Abstand + Position eines Punktes zu einem Liniensegment
+# (genauer als nur die Distanz zu den beiden Endpunkten zu vergleichen)
+# =============================================================================
+def abstand_zu_segment(px, py, x1, y1, x2, y2):
+    dx = x2 - x1
+    dy = y2 - y1
+    laenge_quadrat = dx * dx + dy * dy
 
+    if laenge_quadrat == 0:
+        t = 0.0
+    else:
+        t = ((px - x1) * dx + (py - y1) * dy) / laenge_quadrat
+        t = max(0.0, min(1.0, t))  # auf das Segment begrenzen
+
+    naechster_x = x1 + t * dx
+    naechster_y = y1 + t * dy
+    distanz = math.hypot(px - naechster_x, py - naechster_y)
+    return distanz
 # =============================================================================
 # Funktion: Orte entlang der Route MIT Seitenangabe (links/rechts) finden
 # =============================================================================
@@ -313,9 +331,7 @@ def orte_entlang_route_mit_seite(G_proj, route, orte, transformer, max_distance=
         for i in range(len(koordinaten) - 1):
             x1, y1 = koordinaten[i]
             x2, y2 = koordinaten[i + 1]
-            d1 = math.hypot(x1 - ort_x, y1 - ort_y)
-            d2 = math.hypot(x2 - ort_x, y2 - ort_y)
-            d = min(d1, d2)
+            d = abstand_zu_segment(ort_x, ort_y, x1, y1, x2, y2)
 
             if d < beste_distanz:
                 beste_distanz = d
@@ -555,17 +571,6 @@ Ziel: [Ort]
                         else:
                             ereignisse_text = "- Direkter Weg ohne markante Abbiegungen oder Orientierungspunkte"
 
-                      # Orte entlang der Route finden (in echter Reihenfolge!)
-                        orte_auf_weg = orte_entlang_route(
-                            G_proj, route, ORTE, transformer,
-                            max_distance=20,
-                            ausschluss=[start_ort, ziel_ort]
-                        )
-                        if orte_auf_weg:
-                            orte_text = ", ".join(orte_auf_weg)
-                        else:
-                            orte_text = "keine markanten Orte in der Nähe der Route gefunden"
-
                         st.info("🎨 Erstelle Karte...")
                         try:
                             m = folium.Map(location=[start_lat, start_lon], zoom_start=17)
@@ -600,6 +605,7 @@ FAKTEN ZUR ROUTE (in exakter Reihenfolge, wie man sie auf dem Weg erlebt):
 STRIKTE REGELN:
 1. JEDE Abbiegung aus der obigen Liste MUSS in der Beschreibung vorkommen - lasse KEINE weg.
 2. Nenne bei jeder Abbiegung IMMER die Richtung (links oder rechts), niemals nur "biegen Sie ab".
+2b. Übernehme die Wörter "links" und "rechts" EXAKT wie oben angegeben - vertausche sie NIEMALS und ändere sie NICHT.
 3. Nenne NUR die oben aufgeführten Orte als Orientierungspunkte - keine weiteren Gebäude oder Objekte erfinden.
 4. Wenn kein Ort in der Nähe einer Abbiegung genannt ist, beschreibe nur die Abbiegung selbst (z. B. "Biegen Sie rechts ab").
 5. Erfinde KEINE Ampeln, Kreuzungen, Straßennamen oder Details, die nicht oben stehen.
@@ -618,8 +624,9 @@ Beispiel für den STIL (nicht den Inhalt!):
                                         {"role": "system", "content": "Du bist ein freundlicher, präziser Wegweiser für einen Uni-Campus."},
                                         {"role": "user", "content": beschreibung_prompt}
                                     ],
-                                    max_tokens=5000
-                                )
+                                    max_tokens=5000,
+                                    temperature=0.1
+ )
 
                             if beschreibung:
                                 folium.Marker(
