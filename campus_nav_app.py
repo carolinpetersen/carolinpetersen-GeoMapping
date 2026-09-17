@@ -152,12 +152,13 @@ headers = {
 # =============================================================================
 # 1. Funktion: LLM über AcademicCloud-API aufrufen
 # =============================================================================
-def query_academiccloud(messages, max_tokens=5000, temperature=0.7):
+def query_academiccloud(messages, max_tokens=1500, temperature=0.7, reasoning=False):
     payload = {
         "model": MODEL_NAME,
         "messages": messages,
         "max_tokens": max_tokens,
-        "temperature": temperature
+        "temperature": temperature,
+        "chat_template_kwargs": {"enable_thinking": reasoning}
     }
     try:
         response = requests.post(API_URL, headers=headers, json=payload)
@@ -428,11 +429,11 @@ Ziel: [Ort]
             
 
             messages = [
-                {"role": "system", "content": "Du bist ein entspannter, lässiger Kumpel, der seinen Freund:innen auf dem Campus den Weg zeigt. Du sprichst locker, modern und mit einem Augenzwinkern – wie ein junger Studi, nicht wie eine Behörde. Nutze gerne Umgangssprache, coole Ausdrücke und einen lockeren Ton, aber bleib klar verständlich."},
+                {"role": "system", "content": "/no_think Du bist ein präziser Campus-Navigationssystem. Gib nur die Antwort im vorgegebenen Format aus."},
                 {"role": "user", "content": prompt}
             ]
 
-            response = query_academiccloud(messages, max_tokens=5000)
+            response = query_academiccloud(messages, max_tokens=500, reasoning=False)
 
             if not response:
                 st.error("❌ Keine Antwort vom LLM erhalten.")
@@ -565,14 +566,15 @@ Beispiel für den STIL (nicht den Inhalt!):
 """
 
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
-                                beschreibung = query_academiccloud(
-                                    messages=[
-                                        {"role": "system", "content": "Du bist ein freundlicher, präziser Wegweiser für einen Uni-Campus."},
-                                        {"role": "user", "content": beschreibung_prompt}
-                                    ],
-                                    max_tokens=5000,
-                                    temperature=0.1
- )
+                               beschreibung = query_academiccloud(
+    messages=[
+        {"role": "system", "content": "/no_think Du bist ein entspannter, lässiger Kumpel, der seinen Freund:innen auf dem Campus den Weg zeigt. Du sprichst locker, modern und mit einem Augenzwinkern – wie ein junger Studi, nicht wie eine Behörde. Nutze gerne Umgangssprache, coole Ausdrücke und einen lockeren Ton, aber bleib klar verständlich."},
+        {"role": "user", "content": beschreibung_prompt}
+    ],
+    max_tokens=1000,
+    temperature=0.1,
+    reasoning=False
+)
 
                             if beschreibung:
                                 folium.Marker(
