@@ -352,7 +352,6 @@ def orte_entlang_route_mit_seite(G_proj, route, orte, transformer, max_distance=
 
     return ergebnis
 
-
 # =============================================================================
 # Funktion: Abbiegungen + Orte in echter Reihenfolge kombinieren
 # =============================================================================
@@ -369,59 +368,6 @@ def kombiniere_ereignisse(abbiegungen, orte_mit_seite):
 
     return [text for _, text in ereignisse]
 
-# =============================================================================
-# Funktion: Orte entlang der Route finden (in der richtigen Reihenfolge!)
-# =============================================================================
-def orte_entlang_route(G_proj, route, orte, transformer, max_distance=20, ausschluss=None):
-    """
-    Findet Orte aus 'orte' (campus_orte.py), die nahe an der berechneten Route liegen.
-    Gibt sie SORTIERT zurück - in der Reihenfolge, wie man an ihnen vorbeikommt.
-    
-    max_distance = wie nah (in Metern) ein Ort an der Route sein muss, um "gezählt" zu werden
-    ausschluss = Namen, die NICHT in der Liste erscheinen sollen (z.B. Start & Ziel selbst)
-    """
-    if ausschluss is None:
-        ausschluss = []
-
-    # Koordinaten der Route in Metern (projiziert) sammeln
-    route_punkte = []
-    for node in route:
-        x = G_proj.nodes[node]["x"]
-        y = G_proj.nodes[node]["y"]
-        route_punkte.append((x, y))
-
-    gefundene_orte = []  # Liste von (Position_auf_Route, Name, Distanz)
-
-    for name, (lat, lon) in orte.items():
-        if name in ausschluss:
-            continue
-
-        # Ort-Koordinaten in dieselbe Projektion umwandeln wie die Route
-        ort_x, ort_y = transformer.transform(lon, lat)
-
-        # Kürzeste Distanz zu irgendeinem Punkt der Route berechnen
-        min_dist = float("inf")
-        min_index = None
-        for i, (rx, ry) in enumerate(route_punkte):
-            dist = ((rx - ort_x) ** 2 + (ry - ort_y) ** 2) ** 0.5
-            if dist < min_dist:
-                min_dist = dist
-                min_index = i
-
-        # Nur behalten, wenn nah genug an der Route
-        if min_dist <= max_distance:
-            gefundene_orte.append((min_index, name, min_dist))
-
-    # Nach Position entlang der Route sortieren (wichtig für richtige Reihenfolge!)
-    gefundene_orte.sort(key=lambda tup: tup[0])
-
-    # Namen extrahieren, Duplikate direkt hintereinander vermeiden
-    ergebnis = []
-    for _, name, _ in gefundene_orte:
-        if not ergebnis or ergebnis[-1] != name:
-            ergebnis.append(name)
-
-    return ergebnis
 # =============================================================================
 # 4. Haupt-App (Streamlit)
 # =============================================================================
