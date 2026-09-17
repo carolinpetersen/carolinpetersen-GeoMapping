@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 import os
 from campus_orte import ORTE
 import math
+import random
 
 
 
@@ -369,6 +370,91 @@ def kombiniere_ereignisse(abbiegungen, orte_mit_seite):
     return [text for _, text in ereignisse]
 
 # =============================================================================
+# Funktion: Wegbeschreibung DETERMINISTISCH aus den Fakten bauen
+# Garantiert 100% korrekte Richtungen - keine KI involviert
+# =============================================================================
+
+START_PHRASEN = [
+    "Alles klar, du startest bei {start} und läufst erstmal geradeaus.",
+    "Los geht's bei {start} – erstmal schön geradeaus weiter.",
+    "Du bist bei {start}? Perfekt, dann einfach geradeaus starten.",
+]
+
+RICHTUNG_PHRASEN = [
+    "Jetzt biegste {richtung} ab.",
+    "An dieser Stelle geht's {richtung} weiter.",
+    "Hier musst du {richtung} abbiegen.",
+    "Ab hier nimmst du die {richtung}e Abzweigung.",
+]
+
+LANDMARK_PHRASEN = [
+    "Du kommst an {name} vorbei – liegt auf der {seite}en Seite.",
+    "Gleich taucht {name} auf, auf deiner {seite}en Seite.",
+    "Check {name} ab, den siehst du auf der {seite}en Seite.",
+    "{name} liegt dann auf der {seite}en Seite von dir.",
+]
+
+END_PHRASEN = [
+    "Und schon bist du bei {ziel} angekommen!",
+    "Kurz danach stehst du auch schon bei {ziel}.",
+    "Dann hast du's geschafft – willkommen bei {ziel}!",
+]
+
+
+def erstelle_wegbeschreibung(start_ort, ziel_ort, abbiegungen, orte_mit_seite):
+    ereignisse = []
+    for index, richtung in abbiegungen:
+        ereignisse.append((index, "abbiegung", richtung, None))
+    for index, name, seite in orte_mit_seite:
+        ereignisse.append((index, "landmarke", name, seite))
+
+    ereignisse.sort(key=lambda tup: tup[0])
+
+    saetze = [random.choice(START_PHRASEN).format(start=start_ort)]
+
+    for _, typ, wert1, wert2 in ereignisse:
+        if typ == "abbiegung":
+            satz = random.choice(RICHTUNG_PHRASEN).format(richtung=wert1)
+        else:
+            satz = random.choice(LANDMARK_PHRASEN).format(name=wert1, seite=wert2)
+        saetze.append(satz)
+
+    saetze.append(random.choice(END_PHRASEN).format(ziel=ziel_ort))
+
+    text = "\n".join(f"{i+1}. {satz}" for i, satz in enumerate(saetze))
+    return text
+
+
+# =============================================================================
+# Funktion: KI poliert den fertigen Text nur sprachlich - Fakten bleiben geschützt
+# =============================================================================
+def poliere_mit_ki(roher_text):
+    polier_prompt = f"""
+Hier ist eine technisch korrekte, aber etwas roboterhafte Wegbeschreibung:
+
+{roher_text}
+
+Formuliere sie natürlicher und lockerer, wie ein Studi das einem Kumpel erklären würde.
+
+WICHTIG:
+- Ändere NIEMALS die Wörter "links" oder "rechts".
+- Ändere NIEMALS Gebäude-/Ortsnamen.
+- Ändere NICHT die Reihenfolge der Schritte.
+- Du darfst NUR den sprachlichen Ausdruck verbessern, NICHT den Inhalt.
+- Gib nur nummerierte Schritte aus, keine Einleitung, keine Zusammenfassung.
+"""
+    polierter_text = query_academiccloud(
+        messages=[
+            {"role": "system", "content": "/no_think Du polierst Texte sprachlich auf, ohne Fakten zu verändern. Du bist locker und freundlich wie ein Studi."},
+            {"role": "user", "content": polier_prompt}
+        ],
+        max_tokens=1000,
+        temperature=0.3,
+        reasoning=False
+    )
+    return polierter_text if polierter_text else roher_text
+
+# =============================================================================
 # 4. Haupt-App (Streamlit)
 # =============================================================================
 st.set_page_config(
@@ -540,40 +626,11 @@ Ziel: [Ort]
                                 icon=folium.Icon(color="red", icon="flag")
                             ).add_to(m)
 
-                            beschreibung_prompt = f"""
-Du bist ein Campus-Navigationssystem für den Leuphana-Campus in Lüneburg.
-
-Erstelle eine klare, schrittweise Wegbeschreibung von "{start_ort}" nach "{ziel_ort}".
-
-FAKTEN ZUR ROUTE (in exakter Reihenfolge, wie man sie auf dem Weg erlebt):
-{ereignisse_text}
-
-STRIKTE REGELN:
-1. JEDE Abbiegung aus der obigen Liste MUSS in der Beschreibung vorkommen - lasse KEINE weg.
-2. Nenne bei jeder Abbiegung IMMER die Richtung (links oder rechts), niemals nur "biegen Sie ab".
-2b. Übernehme die Wörter "links" und "rechts" EXAKT wie oben angegeben - vertausche sie NIEMALS und ändere sie NICHT.
-3. Nenne NUR die oben aufgeführten Orte als Orientierungspunkte - keine weiteren Gebäude oder Objekte erfinden.
-4. Wenn kein Ort in der Nähe einer Abbiegung genannt ist, beschreibe nur die Abbiegung selbst (z. B. "Biegen Sie rechts ab").
-5. Erfinde KEINE Ampeln, Kreuzungen, Straßennamen oder Details, die nicht oben stehen.
-6. Gib NUR nummerierte Schritte aus - keine Einleitung, keine Überschrift, keine Zusammenfassung am Ende.
-
-Beispiel für den STIL (nicht den Inhalt!):
-1. Starten Sie bei {start_ort} und gehen Sie geradeaus.
-2. Biegen Sie rechts ab.
-3. Sie kommen an [Ort] vorbei, der auf der linken Seite liegt.
-4. Biegen Sie links ab und folgen Sie dem Weg bis {ziel_ort}.
-"""
-
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
-                               beschreibung = query_academiccloud(
-    messages=[
-        {"role": "system", "content": "/no_think Du bist ein Studi, der seinen Freund:innen auf dem Campus den Weg zeigt. Du bist sehr freundlich und sprichst wie ein junger Mensch. Nutze gerne Umgangssprache aber bleib klar verständlich und präzise."},
-        {"role": "user", "content": beschreibung_prompt}
-    ],
-    max_tokens=1000,
-    temperature=0.1,
-    reasoning=False
-)
+                                roher_text = erstelle_wegbeschreibung(
+                                    start_ort, ziel_ort, abbiegungen, orte_mit_seite
+                                )
+                                beschreibung = poliere_mit_ki(roher_text)
 
                             if beschreibung:
                                 folium.Marker(
