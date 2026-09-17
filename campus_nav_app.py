@@ -1,8 +1,5 @@
 # =============================================================================
-# 🌐 Campus-Navigationssystem – Web-App mit Streamlit (SICHER)
-# =============================================================================
-# Nutzt AcademicCloud-API (mit .env), OSMnx, Folium, Streamlit
-# Sicherheit: API-Key aus .env geladen
+# 🌐 Campus-Navigationssystem – Web-App mit Streamlit 
 # =============================================================================
 
 import streamlit as st
@@ -50,6 +47,7 @@ ort_bedeutungen = {
     "Gneisenaustraße": ["Gneisenaustraße", "Gneisenau"],
     "Gebäude 12": ["Gebäude 12", "12"],
     "Gebäude 13": ["Gebäude 13", "13"],
+    "Mensa": ["Mensa", "Essen", "Mittagessen", "Kantine"],
     "Hochschulsport": ["Sport","Turnhalle"],
     "Leuphana Mensawiese": ["Mensawiese", "Wiese"],
     "Gebäude 3": ["Gebäude 3", "3"],
@@ -57,7 +55,6 @@ ort_bedeutungen = {
     "Scharnhorststraße": ["Scharnhorststraße", "Scharnhorst"],
     "Heinrich-Böll-Straße": ["Heinrich-Böll", "Böll"],
     "Gebäude 8": ["Gebäude 8", "8"],
-    "Mensa": ["Mensa", "Essen", "Mittagessen", "Kantine"],
     "Initiativen-Räume": ["Initiativen", "Initiative"],
     "Gebäude 25": ["Gebäude 25", "25"],
     "Gebäude 27": ["Gebäude 27", "27"],
@@ -126,7 +123,6 @@ LANDMARKEN = [
     "Gebäude 26",
     "Gebäude 27",
     "Gebäude 40",
-    # ➕ Hier kannst du jederzeit weitere Orte ergänzen oder welche entfernen
 ]
 
 # 🔐 Lade Umgebungsvariablen (.env)
