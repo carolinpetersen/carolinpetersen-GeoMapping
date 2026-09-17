@@ -567,7 +567,7 @@ Beispiel für den STIL (nicht den Inhalt!):
                             with st.spinner("🗣️ Generiere Wegbeschreibung..."):
                                beschreibung = query_academiccloud(
     messages=[
-        {"role": "system", "content": "/no_think Du bist ein entspannter, lässiger Kumpel, der seinen Freund:innen auf dem Campus den Weg zeigt. Du sprichst locker, modern und mit einem Augenzwinkern – wie ein junger Studi, nicht wie eine Behörde. Nutze gerne Umgangssprache, coole Ausdrücke und einen lockeren Ton, aber bleib klar verständlich."},
+        {"role": "system", "content": "/no_think Du bist ein Studi, der seinen Freund:innen auf dem Campus den Weg zeigt. Du bist sehr freundlich und sprichst wie ein junger Mensch. Nutze gerne Umgangssprache aber bleib klar verständlich und präzise."},
         {"role": "user", "content": beschreibung_prompt}
     ],
     max_tokens=1000,
