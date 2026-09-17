@@ -163,14 +163,25 @@ def query_academiccloud(messages, max_tokens=5000, temperature=0.7):
         response = requests.post(API_URL, headers=headers, json=payload)
         if response.status_code == 200:
             result = response.json()
-            return result["choices"][0]["message"]["content"].strip()
+
+            # ✅ NEU: Sicher prüfen, ob eine echte Antwort vorhanden ist
+            choices = result.get("choices")
+            if not choices:
+                st.error(f"❌ API hat keine 'choices' zurückgegeben: {result}")
+                return None
+
+            content = choices[0].get("message", {}).get("content")
+            if not content:
+                st.error(f"❌ API-Antwort enthält keinen Text (evtl. max_tokens zu niedrig oder Antwort blockiert). Vollständige Antwort: {result}")
+                return None
+
+            return content.strip()
         else:
             st.error(f"API-Fehler: {response.status_code} - {response.text}")
             return None
     except Exception as e:
         st.error(f"Fehler beim API-Aufruf: {e}")
         return None
-
 # =============================================================================
 # 2. Funktion: LLM-Antwort parsen
 # =============================================================================
