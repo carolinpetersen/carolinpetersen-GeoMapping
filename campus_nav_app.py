@@ -556,7 +556,6 @@ STRIKTE REGELN:
 4. Wenn kein Ort in der Nähe einer Abbiegung genannt ist, beschreibe nur die Abbiegung selbst (z. B. "Biegen Sie rechts ab").
 5. Erfinde KEINE Ampeln, Kreuzungen, Straßennamen oder Details, die nicht oben stehen.
 6. Gib NUR nummerierte Schritte aus - keine Einleitung, keine Überschrift, keine Zusammenfassung am Ende.
-7. Schreibe locker, cool und modern - wie ein:e Student:in, der/die einem Kumpel den Weg erklärt. Nutze ruhig Wörter wie "chillst", "geradeaus", "checkst", "biegste ab" statt förmlicher Sprache wie "Sie biegen ab, bitte folgen Sie...".
 
 Beispiel für den STIL (nicht den Inhalt!):
 1. Starten Sie bei {start_ort} und gehen Sie geradeaus.
