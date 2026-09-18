@@ -14,6 +14,7 @@ import os
 from campus_orte import ORTE
 import math
 import random
+import re
 
 
 
@@ -454,23 +455,31 @@ def erstelle_wegbeschreibung(start_ort, ziel_ort, abbiegungen, orte_mit_seite):
     text = "\n".join(f"{i+1}. {satz}" for i, satz in enumerate(saetze))
     return text
 
-
+# =============================================================================
+# Hilfsfunktion: Zählt nummerierte Schritte in einem Text (z.B. "1.", "2.", ...)
+# =============================================================================
+def zaehle_schritte(text):
+    return len(re.findall(r"^\d+\.", text, re.MULTILINE))
 # =============================================================================
 # Funktion: KI poliert den fertigen Text nur sprachlich - Fakten bleiben geschützt
 # =============================================================================
 def poliere_mit_ki(roher_text):
+    anzahl_schritte_original = zaehle_schritte(roher_text)
+
     polier_prompt = f"""
-Hier ist eine technisch korrekte, aber etwas roboterhafte Wegbeschreibung:
+Hier ist eine technisch korrekte, aber etwas roboterhafte Wegbeschreibung mit GENAU {anzahl_schritte_original} Schritten:
 
 {roher_text}
 
 Formuliere sie natürlicher und lockerer, wie ein Studi das einem Kumpel erklären würde.
 
 WICHTIG:
+- Die Ausgabe MUSS GENAU {anzahl_schritte_original} nummerierte Schritte enthalten - nicht mehr, nicht weniger.
+- Fasse KEINE zwei Schritte zusammen. Lasse KEINEN Schritt weg.
 - Ändere NIEMALS die Wörter "links" oder "rechts".
 - Ändere NIEMALS Gebäude-/Ortsnamen.
 - Ändere NICHT die Reihenfolge der Schritte.
-- Du darfst NUR den sprachlichen Ausdruck verbessern, NICHT den Inhalt.
+- Du darfst NUR den sprachlichen Ausdruck jedes einzelnen Schrittes verbessern, NICHT den Inhalt oder die Anzahl.
 - Gib nur nummerierte Schritte aus, keine Einleitung, keine Zusammenfassung.
 """
     polierter_text = query_academiccloud(
@@ -478,11 +487,21 @@ WICHTIG:
             {"role": "system", "content": "/no_think Du polierst Texte sprachlich auf, ohne Fakten zu verändern. Du bist locker und freundlich wie ein Studi."},
             {"role": "user", "content": polier_prompt}
         ],
-        max_tokens=1000,
+        max_tokens=1500,
         temperature=0.3,
         reasoning=False
     )
-    return polierter_text if polierter_text else roher_text
+
+    if not polierter_text:
+        return roher_text
+
+    # ✅ Sicherheitsnetz: Prüfen, ob die KI wirklich ALLE Schritte übernommen hat
+    anzahl_schritte_poliert = zaehle_schritte(polierter_text)
+    if anzahl_schritte_poliert != anzahl_schritte_original:
+        st.warning(f"⚠️ KI-Politur hat Schritte verändert ({anzahl_schritte_original} → {anzahl_schritte_poliert}). Nutze garantiert vollständige Version.")
+        return roher_text
+
+    return polierter_text
 
 # =============================================================================
 # 4. Haupt-App (Streamlit)
