@@ -122,6 +122,11 @@ LANDMARKEN = [
     "Gebäude 26",
     "Gebäude 27",
     "Gebäude 40",
+    "Hörsaal 1",
+    "Hörsaal 2",
+    "Hörsaal 3",
+    "Hörsaal 4",
+    "Hörsaal 5"
 ]
 
 # 🔐 Lade Umgebungsvariablen (.env)
