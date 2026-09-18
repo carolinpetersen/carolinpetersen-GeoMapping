@@ -1,6 +1,4 @@
-# =============================================================================
 # 🌐 Campus-Navigationssystem – Web-App mit Streamlit 
-# =============================================================================
 
 import streamlit as st
 import requests
@@ -16,8 +14,9 @@ import math
 import random
 import re
 
-
-
+# =============================================================================
+# Orte und Bedeutungen
+# =============================================================================
 ort_bedeutungen = {
     "Universitätsallee": ["Universitätsallee", "Universität", "Campus", "Hauptstraße", "Alle"],
     "Radio Zusa": ["Radio", "Zusa", "Rundfunk", "Radio Zusa"],
@@ -27,26 +26,26 @@ ort_bedeutungen = {
     "Wichernstraße": ["Wichernstraße", "Straße", "Wichern"],
     "Carl-von-Ossietzky-Straße": ["Carl-von-Ossietzky", "CVO"],
     "Kindertagesstätte Campus": ["Kindertagesstätte", "Kita", "Kindergarten", "Kinder"],
-    "Studio 21": ["Studio 21", "Sport", "Fitness", "Workout", "Gym"],
+    "Studio 21": ["Studio 21", "Sport", "Fitness", "Workout", "Gym", "Trainieren", "Training"],
     "HairNews": ["Friseur", "Haare", "Friseur", "Haarschnitt"],
     "Kruse - Der Lecker Bäcker": ["Bäcker", "Kruse", "Brot", "Kuchen", "Backwaren", "Brötchen"],
     "Alexander Fritz GmbH": ["Firma", "Unternehmen", "Fritz", "GmbH"],
-    "planB": ["planB", "Büro", "Büro", "Planung"],
-    "Universitätsbibliothek": ["Bibliothek", "Bib", "Bücher", "Lernen", "BIB"],
+    "planB": ["planB","Nachhaltigkeit"],
+    "Universitätsbibliothek": ["Bibliothek", "Bib", "Bücher", "Lernen", "Ruhe","BIB"],
     "Blücherstraße": ["Blücherstraße", "Blücher"],
     "Geschwister-Scholl-Haus": ["Geschwister-Scholl", "Haus", "GSH"],
     "Zufahrt 1 Leuphana Universität Lüneburg": ["Zufahrt 1"],
-    "Klippo": ["Klippo", "Kiosk", "Laden", "Kiosk", "Snack", "Kaffee"],
+    "Klippo": ["Klippo", "Pause", "Kiosk", "Laden", "Kiosk", "Snack", "Co-Working", "Kaffee", "Getränke"],
     "Zufahrt 2 Leuphana Universität Lüneburg": ["Zufahrt 2"],
     "Zufahrt 3 Leuphana Universität Lüneburg": ["Zufahrt 3"],
-    "TRAFOS": ["TRAFOS", "Transformator", "Strom", "Energie"],
+    "TRAFOS": ["TRAFOS", "Co-Working"],
     "Gondel": ["Gondel", "Kaffee"],
-    "Universität": ["Universität", "Campus", "Hauptgebäude", "Hauptgebäude"],
+    "Universität": ["Universität", "Campus"],
     "Zentraler Campus": ["Campus"],
     "Gneisenaustraße": ["Gneisenaustraße", "Gneisenau"],
     "Gebäude 12": ["Gebäude 12", "12"],
     "Gebäude 13": ["Gebäude 13", "13"],
-    "Mensa": ["Mensa", "Essen", "Mittagessen", "Kantine"],
+    "Mensa": ["Mensa", "Essen", "Mittagessen", "Kantine", "Flasche", "Trinkflasche"],
     "Hochschulsport": ["Sport","Turnhalle"],
     "Leuphana Mensawiese": ["Mensawiese", "Wiese"],
     "Gebäude 3": ["Gebäude 3", "3"],
@@ -71,15 +70,15 @@ ort_bedeutungen = {
     "Gebäude 5": ["Gebäude 5", "5"],
     "Gebäude 6": ["Gebäude 6", "6"],
     "Gebäude 7": ["Gebäude 7", "7"],
-    "Gebäude 9": ["Gebäude 9", "9"],
+    "Gebäude 9": ["Gebäude 9", "9", "ASTA", "Flasche", "Trinkflasche"],
     "Hörsaal 1": ["Hörsaal 1"],
     "Hörsaal 2": ["Hörsaal 2"],
     "Hörsaal 3": ["Hörsaal 3"],
     "Hörsaal 5": ["Hörsaal 5"],
-    "Hörsaalgang": ["Hörsaalgang", "Hörsäle"],
+    "Hörsaalgang": ["Hörsaalgang", "Hörsäle", "Flasche", "Trinkflasche"],
     "Laubgang": ["Laubgang"],
     "Gebäude 26": ["Gebäude 26", "26"],
-    "Leuphana Universität Lüneburg Zentralgebäude C40": ["Zentralgebäude", "C40", "Zentral", "Hauptgebäude", "ZG"],
+    "Leuphana Universität Lüneburg Zentralgebäude C40": ["Zentralgebäude", "C40", "Zentral", "Hauptgebäude", "ZG", "Flasche", "Trinkflasche"],
     "Hörsaal 4": ["Hörsaal 4"],
     "Biotopgarten": ["Biotopgarten", "Garten", "Pflanzen", "Natur", "Biotop", "Grünfläche", "grün"],
     "Waldgarten Campus Lüneburg": ["Waldgarten", "Natur"],
@@ -89,8 +88,7 @@ ort_bedeutungen = {
 bedeutungen = "\n".join([f"- {ort}: {', '.join(worte)}" for ort, worte in ort_bedeutungen.items()])
 
 # =============================================================================
-# Manuell festgelegte Landmarken: Nur DIESE Orte werden in der Wegbeschreibung
-# als "vorbei an..." genannt (große, gut sichtbare Gebäude/Orte)
+# Liste der Landmarken
 # =============================================================================
 LANDMARKEN = [
     "Mensa",
@@ -191,8 +189,7 @@ def parse_llm_response(response_text):
     return start, ziel, anforderungen
 
 # =============================================================================
-# Funktion: ALLE passenden Orte finden (nicht nur den ersten Treffer)
-# Wichtig für Fälle wie "Kaffee" -> Klippo UND Gondel
+# 3. Funktion: passende Orte finden 
 # =============================================================================
 def finde_alle_orte(suchbegriff, ort_bedeutungen, orte_koordinaten):
     suchbegriff = suchbegriff.lower()
@@ -204,7 +201,7 @@ def finde_alle_orte(suchbegriff, ort_bedeutungen, orte_koordinaten):
         if ort_name not in orte_koordinaten:
             continue
 
-        # ✅ NEU: Den offiziellen Ortsnamen selbst ebenfalls als "Bedeutung" mit einbeziehen
+        # Den offiziellen Ortsnamen selbst ebenfalls als "Bedeutung" mit einbeziehen
         alle_begriffe = [ort_name] + bedeutungen_liste
 
         gefunden = False
@@ -214,7 +211,7 @@ def finde_alle_orte(suchbegriff, ort_bedeutungen, orte_koordinaten):
                 exakte_treffer.append((ort_name, orte_koordinaten[ort_name]))
                 gefunden = True
                 break
-            # ✅ FIX: Beide Richtungen prüfen (kurzes Wort in langem Suchbegriff, oder umgekehrt)
+            # Beide Richtungen prüfen (kurzes Wort in langem Suchbegriff, oder umgekehrt)
             elif begriff_lower in suchbegriff or suchbegriff in begriff_lower:
                 teil_treffer.append((ort_name, orte_koordinaten[ort_name]))
                 gefunden = True
@@ -225,8 +222,7 @@ def finde_alle_orte(suchbegriff, ort_bedeutungen, orte_koordinaten):
         return exakte_treffer
     return teil_treffer
 # =============================================================================
-# Funktion: Beste Kombination aus mehreren Start-/Zielkandidaten finden
-# Berechnet für JEDE Kombination die Weglänge und gibt die kürzeste zurück
+# 4.Funktion: Beste Kombination aus mehreren Start-/Zielkandidaten finden
 # =============================================================================
 def beste_kombination_finden(G_proj, transformer, start_kandidaten, ziel_kandidaten):
     beste_kombination = None
@@ -262,7 +258,7 @@ def beste_kombination_finden(G_proj, transformer, start_kandidaten, ziel_kandida
     return beste_kombination
 
 # =============================================================================
-# Funktion: Kompasswinkel (Bearing) zwischen zwei Punkten berechnen
+# 5. Funktion: Kompasswinkel (Bearing) zwischen zwei Punkten berechnen
 # =============================================================================
 def bearing(x1, y1, x2, y2):
     delta_x = x2 - x1
@@ -270,9 +266,8 @@ def bearing(x1, y1, x2, y2):
     angle = math.degrees(math.atan2(delta_x, delta_y))  # 0° = Norden, 90° = Osten
     return angle % 360
 
-
 # =============================================================================
-# Funktion: Abbiegerichtung zwischen zwei Bearings bestimmen
+# 6. Funktion: Abbiegerichtung zwischen zwei Bearings bestimmen
 # =============================================================================
 def abbiege_richtung(bearing_vorher, bearing_nachher, schwelle=25):
     diff = (bearing_nachher - bearing_vorher + 180) % 360 - 180
@@ -283,9 +278,8 @@ def abbiege_richtung(bearing_vorher, bearing_nachher, schwelle=25):
     else:
         return None  # keine relevante Richtungsänderung
 
-
 # =============================================================================
-# Funktion: Auf welcher Seite liegt ein Punkt relativ zur Gehrichtung?
+# 7.Funktion: Auf welcher Seite liegt ein Punkt relativ zur Gehrichtung?
 # =============================================================================
 def seite_von_punkt(x1, y1, x2, y2, px, py):
     cross = (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
@@ -296,9 +290,8 @@ def seite_von_punkt(x1, y1, x2, y2, px, py):
     else:
         return "direkt auf dem Weg"
 
-
 # =============================================================================
-# Funktion: Abbiegungen entlang der gesamten Route berechnen
+# 8. Funktion: Abbiegungen entlang der gesamten Route berechnen
 # =============================================================================
 def berechne_abbiegungen(G_proj, route, schwelle=45, min_abstand=30):
     koordinaten = [(G_proj.nodes[n]["x"], G_proj.nodes[n]["y"]) for n in route]
@@ -347,7 +340,7 @@ def abstand_zu_segment(px, py, x1, y1, x2, y2):
     distanz = math.hypot(px - naechster_x, py - naechster_y)
     return distanz
 # =============================================================================
-# Funktion: Orte entlang der Route MIT Seitenangabe (links/rechts) finden
+# 9. Funktion: Orte entlang der Route MIT Seitenangabe (links/rechts) finden
 # =============================================================================
 def orte_entlang_route_mit_seite(G_proj, route, orte, transformer, max_distance=40, ausschluss=None):
     if ausschluss is None:
@@ -390,7 +383,7 @@ def orte_entlang_route_mit_seite(G_proj, route, orte, transformer, max_distance=
     return ergebnis
 
 # =============================================================================
-# Funktion: Abbiegungen + Orte in echter Reihenfolge kombinieren
+# 10. Funktion: Abbiegungen + Orte in echter Reihenfolge kombinieren
 # =============================================================================
 def kombiniere_ereignisse(abbiegungen, orte_mit_seite):
     ereignisse = []
@@ -406,8 +399,8 @@ def kombiniere_ereignisse(abbiegungen, orte_mit_seite):
     return [text for _, text in ereignisse]
 
 # =============================================================================
-# Funktion: Wegbeschreibung DETERMINISTISCH aus den Fakten bauen
-# Garantiert 100% korrekte Richtungen - keine KI involviert
+# 11. Funktion: Wegbeschreibung aus dem Code bauen
+# (keine KI involviert)
 # =============================================================================
 
 START_PHRASEN = [
@@ -436,6 +429,7 @@ END_PHRASEN = [
     "Dann hast du's geschafft – willkommen bei {ziel}!",
 ]
 
+#Funktion für Wegbeschreibung
 
 def erstelle_wegbeschreibung(start_ort, ziel_ort, abbiegungen, orte_mit_seite):
     ereignisse = []
@@ -466,7 +460,7 @@ def erstelle_wegbeschreibung(start_ort, ziel_ort, abbiegungen, orte_mit_seite):
 def zaehle_schritte(text):
     return len(re.findall(r"^\d+\.", text, re.MULTILINE))
 # =============================================================================
-# Funktion: KI poliert den fertigen Text nur sprachlich - Fakten bleiben geschützt
+# 12. Funktion: KI poliert den fertigen Text nur sprachlich - Route bleibt geschützt
 # =============================================================================
 def poliere_mit_ki(roher_text):
     anzahl_schritte_original = zaehle_schritte(roher_text)
@@ -479,7 +473,7 @@ Hier ist eine technisch korrekte, aber etwas roboterhafte Wegbeschreibung mit GE
 Formuliere sie natürlicher und lockerer, wie ein Studi das einem Kumpel erklären würde.
 
 WICHTIG:
-- Die Ausgabe MUSS GENAU {anzahl_schritte_original} nummerierte Schritte enthalten - nicht mehr, nicht weniger.
+- Die Ausgabe muss genau {anzahl_schritte_original} nummerierte Schritte enthalten - nicht mehr, nicht weniger.
 - Fasse KEINE zwei Schritte zusammen. Lasse KEINEN Schritt weg.
 - Ändere NIEMALS die Wörter "links" oder "rechts".
 - Ändere NIEMALS Gebäude-/Ortsnamen.
@@ -509,7 +503,7 @@ WICHTIG:
     return polierter_text
 
 # =============================================================================
-# 4. Haupt-App (Streamlit)
+# Website in Streamlit
 # =============================================================================
 st.set_page_config(
     page_title="🎓 Campus-Navigation",
@@ -521,9 +515,8 @@ st.title("🗺️ Leupht-wohin?")
 st.markdown("Das beste (und einzige) Campus-Navigationssystem für die Leuphana Uni!")
 
 # =============================================================================
-# 5. Eingabebereich
+# Eingabebereich
 # =============================================================================
-# ✅ NEU: Session State initialisieren
 if "route_data" not in st.session_state:
     st.session_state.route_data = None
 
@@ -539,7 +532,7 @@ with st.container():
     submit = st.button("🔍 Route berechnen", type="primary", use_container_width=True)
 
 # =============================================================================
-# 6. Wenn berechnen geklickt
+# Klick "Route berechnen"
 # =============================================================================
 if submit:
     if not start_input or not ziel_input:
@@ -562,8 +555,6 @@ Start: [Ort]
 Ziel: [Ort]
 
 """
-            
-
             messages = [
                 {"role": "system", "content": "/no_think Du bist ein präziser Campus-Navigationssystem. Gib nur die Antwort im vorgegebenen Format aus."},
                 {"role": "user", "content": prompt}
@@ -642,10 +633,10 @@ Ziel: [Ort]
                             st.error(f"❌ Fehler bei Routing: {e}")
                             st.stop()
 
-                        # Abbiegungen berechnen (basiert auf echter Geometrie!)
+                        # Abbiegungen berechnen (basierend auf Geometrie)
                         abbiegungen = berechne_abbiegungen(G_proj, route, schwelle=25, min_abstand=15)
 
-                        # Orte MIT Seitenangabe entlang der Route finden
+                        # Orte mit Seitenangabe entlang der Route finden
                         orte_mit_seite = orte_entlang_route_mit_seite(
                             G_proj, route, ORTE, transformer,
                             max_distance=40,
@@ -699,7 +690,7 @@ Ziel: [Ort]
                         except Exception as e:
                             st.error(f"❌ Fehler bei Karten-Erstellung: {e}")
 # =============================================================================
-# ✅ NEU: Zeige gespeicherte Ergebnisse an (bleibt auch nach Streamlit-Reruns bestehen)
+# Zeige gespeicherte Ergebnisse an (bleibt auch nach Streamlit-Reruns bestehen)
 # =============================================================================
 if st.session_state.route_data:
     data = st.session_state.route_data
@@ -714,7 +705,7 @@ if st.session_state.route_data:
     )
 
 # =============================================================================
-# 7. Footer
+# 7. Endzeile
 # =============================================================================
 st.markdown("---")
 st.markdown("💡 *Entwickelt mit ❤️ von Leonie und Caro für den Leuphana-Campus. AcademicCloud-API verwendet.*")
