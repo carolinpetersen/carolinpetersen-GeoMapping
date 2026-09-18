@@ -197,7 +197,73 @@ def finde_ort(suchbegriff, orte):
         if suchbegriff in name.lower():
             st.info(f"🔍 Verwende: {name}")
             return orte[name]
-    return None
+    return None# =============================================================================
+# Funktion: ALLE passenden Orte finden (nicht nur den ersten Treffer)
+# Wichtig für Fälle wie "Kaffee" -> Klippo UND Gondel
+# =============================================================================
+def finde_alle_orte(suchbegriff, ort_bedeutungen, orte_koordinaten):
+    suchbegriff = suchbegriff.lower()
+
+    exakte_treffer = []
+    teil_treffer = []
+
+    for ort_name, bedeutungen_liste in ort_bedeutungen.items():
+        if ort_name not in orte_koordinaten:
+            continue
+
+        for bedeutung in bedeutungen_liste:
+            bedeutung_lower = bedeutung.lower()
+            if suchbegriff == bedeutung_lower:
+                exakte_treffer.append((ort_name, orte_koordinaten[ort_name]))
+                break
+            elif suchbegriff in bedeutung_lower:
+                teil_treffer.append((ort_name, orte_koordinaten[ort_name]))
+                break
+
+    # Exakte Treffer haben Vorrang - nur wenn keine da sind, Teiltreffer nutzen
+    if exakte_treffer:
+        return exakte_treffer
+    return teil_treffer
+
+
+# =============================================================================
+# Funktion: Beste Kombination aus mehreren Start-/Zielkandidaten finden
+# Berechnet für JEDE Kombination die Weglänge und gibt die kürzeste zurück
+# =============================================================================
+def beste_kombination_finden(G_proj, transformer, start_kandidaten, ziel_kandidaten):
+    beste_kombination = None
+    kuerzeste_distanz = float("inf")
+
+    for start_name, (start_lat, start_lon) in start_kandidaten:
+        start_x, start_y = transformer.transform(start_lon, start_lat)
+        orig = ox.nearest_nodes(G_proj, start_x, start_y)
+
+        for ziel_name, (ziel_lat, ziel_lon) in ziel_kandidaten:
+            ziel_x, ziel_y = transformer.transform(ziel_lon, ziel_lat)
+            dest = ox.nearest_nodes(G_proj, ziel_x, ziel_y)
+
+            if orig == dest:
+                continue  # macht keinen Sinn, Start = Ziel
+
+            try:
+                distanz = nx.shortest_path_length(G_proj, orig, dest, weight="length")
+            except nx.NetworkXNoPath:
+                continue  # kein Weg zwischen diesen Punkten vorhanden
+
+            if distanz < kuerzeste_distanz:
+                kuerzeste_distanz = distanz
+                beste_kombination = {
+                    "start_name": start_name,
+                    "start_coords": (start_lat, start_lon),
+                    "ziel_name": ziel_name,
+                    "ziel_coords": (ziel_lat, ziel_lon),
+                    "orig": orig,
+                    "dest": dest,
+                }
+
+    return beste_kombination
+
+
 
 # =============================================================================
 # Funktion: Straßennamen entlang der Route extrahieren
@@ -506,8 +572,6 @@ Ziel: [Ort]
 """
 #wenn mehrer Bedeutungen, dann für jede davon einen Weg berechnen und danach den lürzesten auswählen
 #wenn es diese Bedeutung nicht gibt, dann Fehlermeldung
-        
-
             
 
             messages = [
@@ -531,16 +595,18 @@ Ziel: [Ort]
                 else:
                     st.info(f"✅ Start: **{start_ort}** → Ziel: **{ziel_ort}**")
 
-                    start = finde_ort(start_ort, ORTE)
-                    ziel = finde_ort(ziel_ort, ORTE)
+                start_kandidaten = finde_alle_orte(start_ort, ort_bedeutungen, ORTE)
+                ziel_kandidaten = finde_alle_orte(ziel_ort, ort_bedeutungen, ORTE)
 
-                    if start is None:
+                if not start_kandidaten:
                         st.error(f"❌ Startort '{start_ort}' nicht gefunden.")
-                    elif ziel is None:
+                elif not ziel_kandidaten:
                         st.error(f"❌ Zielort '{ziel_ort}' nicht gefunden.")
-                    else:
-                        start_lat, start_lon = start
-                        ziel_lat, ziel_lon = ziel
+                else:
+                        if len(start_kandidaten) > 1 or len(ziel_kandidaten) > 1:
+                            namen_start = ", ".join(n for n, _ in start_kandidaten)
+                            namen_ziel = ", ".join(n for n, _ in ziel_kandidaten)
+                            st.info(f"🔀 Mehrdeutig! Mögliche Startorte: {namen_start} | Mögliche Ziele: {namen_ziel} → berechne kürzeste Kombination...")
 
                         st.info("📥 Lade Kartendaten...")
                         try:
@@ -550,22 +616,33 @@ Ziel: [Ort]
                             st.error(f"❌ Fehler beim Laden der Karte: {e}")
                             st.stop()
 
-                        st.info("🔍 Suche Wegpunkte...")
+                        st.info("🔍 Suche beste Kombination...")
                         try:
-                            # Graph projizieren (nutzt pyproj, KEIN scikit-learn)
                             G_proj = ox.project_graph(G)
                             zielcrs = G_proj.graph["crs"]
-
                             transformer = pyproj.Transformer.from_crs("EPSG:4326", zielcrs, always_xy=True)
-                            start_x, start_y = transformer.transform(start_lon, start_lat)
-                            ziel_x, ziel_y = transformer.transform(ziel_lon, ziel_lat)
 
-                            # Nutzt scipy cKDTree (kein scikit-learn nötig)
-                            orig = ox.nearest_nodes(G_proj, start_x, start_y)
-                            dest = ox.nearest_nodes(G_proj, ziel_x, ziel_y)
+                            kombination = beste_kombination_finden(
+                                G_proj, transformer, start_kandidaten, ziel_kandidaten
+                            )
                         except Exception as e:
                             st.error(f"❌ Fehler bei Knotensuche: {e}")
                             st.stop()
+
+                        if kombination is None:
+                            st.error("❌ Es konnte keine gültige Route zwischen den gefundenen Orten berechnet werden.")
+                            st.stop()
+
+                        # Gewinner-Kombination übernehmen
+                        start_ort = kombination["start_name"]
+                        ziel_ort = kombination["ziel_name"]
+                        start_lat, start_lon = kombination["start_coords"]
+                        ziel_lat, ziel_lon = kombination["ziel_coords"]
+                        orig = kombination["orig"]
+                        dest = kombination["dest"]
+
+                        if len(start_kandidaten) > 1 or len(ziel_kandidaten) > 1:
+                            st.success(f"✅ Kürzeste Kombination: **{start_ort}** → **{ziel_ort}**")
 
                         st.info("🚀 Berechne kürzeste Route...")
                         try:
