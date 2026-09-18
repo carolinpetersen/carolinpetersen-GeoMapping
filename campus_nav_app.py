@@ -4,7 +4,6 @@
 
 import streamlit as st
 import requests
-import json
 import networkx as nx
 import folium
 import osmnx as ox
@@ -32,7 +31,6 @@ ort_bedeutungen = {
     "Kruse - Der Lecker Bäcker": ["Bäcker", "Kruse", "Brot", "Kuchen", "Backwaren", "Brötchen"],
     "Alexander Fritz GmbH": ["Firma", "Unternehmen", "Fritz", "GmbH"],
     "planB": ["planB", "Büro", "Büro", "Planung"],
-    "Scharnhorststraße": ["Scharnhorst"],
     "Universitätsbibliothek": ["Bibliothek", "Bib", "Bücher", "Lernen", "BIB"],
     "Blücherstraße": ["Blücherstraße", "Blücher"],
     "Geschwister-Scholl-Haus": ["Geschwister-Scholl", "Haus", "GSH"],
@@ -187,17 +185,6 @@ def parse_llm_response(response_text):
     return start, ziel, anforderungen
 
 # =============================================================================
-# 3. Funktion: Suche Ort in ORTE
-# =============================================================================
-def finde_ort(suchbegriff, orte):
-    suchbegriff = suchbegriff.lower()
-    for name in orte:
-        if name.lower() == suchbegriff:
-            return orte[name]
-        if suchbegriff in name.lower():
-            st.info(f"🔍 Verwende: {name}")
-            return orte[name]
-    return None# =============================================================================
 # Funktion: ALLE passenden Orte finden (nicht nur den ersten Treffer)
 # Wichtig für Fälle wie "Kaffee" -> Klippo UND Gondel
 # =============================================================================
@@ -262,30 +249,6 @@ def beste_kombination_finden(G_proj, transformer, start_kandidaten, ziel_kandida
                 }
 
     return beste_kombination
-
-
-
-# =============================================================================
-# Funktion: Straßennamen entlang der Route extrahieren
-# =============================================================================
-def route_strassen(G, route):
-    """
-    Extrahiert die Straßennamen entlang der berechneten Route,
-    ohne Duplikate direkt hintereinander.
-    """
-    strassen = []
-    for u, v in zip(route[:-1], route[1:]):
-        data = G.get_edge_data(u, v)
-        if data:
-            # Bei mehreren parallelen Kanten: erste nehmen
-            edge = data[0] if 0 in data else list(data.values())[0]
-            name = edge.get("name", None)
-            if name:
-                if isinstance(name, list):
-                    name = name[0]
-                if not strassen or strassen[-1] != name:
-                    strassen.append(name)
-    return strassen
 
 # =============================================================================
 # Funktion: Kompasswinkel (Bearing) zwischen zwei Punkten berechnen
@@ -570,8 +533,6 @@ Start: [Ort]
 Ziel: [Ort]
 
 """
-#wenn mehrer Bedeutungen, dann für jede davon einen Weg berechnen und danach den lürzesten auswählen
-#wenn es diese Bedeutung nicht gibt, dann Fehlermeldung
             
 
             messages = [
@@ -652,13 +613,6 @@ Ziel: [Ort]
                             st.error(f"❌ Fehler bei Routing: {e}")
                             st.stop()
 
-                                        # Straßennamen entlang der Route extrahieren
-                        strassen_liste = route_strassen(G, route)
-                        if strassen_liste:
-                            strassen_text = ", ".join(strassen_liste)
-                        else:
-                            strassen_text = "keine benannten Straßen gefunden"
-
                         # Abbiegungen berechnen (basiert auf echter Geometrie!)
                         abbiegungen = berechne_abbiegungen(G_proj, route, schwelle=25, min_abstand=15)
 
@@ -686,12 +640,6 @@ Ziel: [Ort]
                                 x = G.nodes[node]["x"]
                                 route_coords.append((y, x))
                             folium.PolyLine(route_coords, color="blue", weight=6, opacity=0.8).add_to(m)
-
-                            folium.Marker(
-                                [start_lat, start_lon],
-                                popup=f"Start: {start_ort}",
-                                icon=folium.Icon(color="green", icon="play")
-                            ).add_to(m)
 
                             folium.Marker(
                                 [ziel_lat, ziel_lon],
