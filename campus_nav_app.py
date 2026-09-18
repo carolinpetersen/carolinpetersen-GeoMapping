@@ -413,14 +413,14 @@ RICHTUNG_PHRASEN = [
     "Jetzt biegste {richtung} ab.",
     "An dieser Stelle geht's {richtung} weiter.",
     "Hier musst du {richtung} abbiegen.",
-    "Ab hier nimmst du die {richtung}e Abzweigung.",
+    "Ab hier nimmst du die Abzweigung {richtung}.",
 ]
 
 LANDMARK_PHRASEN = [
-    "Du kommst an {name} vorbei – liegt auf der {seite}en Seite.",
-    "Gleich taucht {name} auf, auf deiner {seite}en Seite.",
-    "Check {name} ab, den siehst du auf der {seite}en Seite.",
-    "{name} liegt dann auf der {seite}en Seite von dir.",
+    "Du kommst an {name} vorbei – liegt {seite} von dir.",
+    "Gleich taucht{seite} {name} auf.",
+    "Check {name} ab, siehst du {seite} von dir.",
+    "{name} liegt dann {seite} von dir.",
 ]
 
 END_PHRASEN = [
@@ -708,4 +708,4 @@ if st.session_state.route_data:
 # 7. Endzeile
 # =============================================================================
 st.markdown("---")
-st.markdown("💡 *Entwickelt mit ❤️ von Leonie und Caro für den Leuphana-Campus. AcademicCloud-API verwendet.*")
+st.markdown("*Entwickelt mit Herz von Leonie und Caro für den Leuphana-Campus. AcademicCloud-API verwendet.*")
