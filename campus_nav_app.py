@@ -198,21 +198,26 @@ def finde_alle_orte(suchbegriff, ort_bedeutungen, orte_koordinaten):
         if ort_name not in orte_koordinaten:
             continue
 
-        for bedeutung in bedeutungen_liste:
-            bedeutung_lower = bedeutung.lower()
-            if suchbegriff == bedeutung_lower:
+        # ✅ NEU: Den offiziellen Ortsnamen selbst ebenfalls als "Bedeutung" mit einbeziehen
+        alle_begriffe = [ort_name] + bedeutungen_liste
+
+        gefunden = False
+        for begriff in alle_begriffe:
+            begriff_lower = begriff.lower()
+            if suchbegriff == begriff_lower:
                 exakte_treffer.append((ort_name, orte_koordinaten[ort_name]))
+                gefunden = True
                 break
-            elif suchbegriff in bedeutung_lower:
+            # ✅ FIX: Beide Richtungen prüfen (kurzes Wort in langem Suchbegriff, oder umgekehrt)
+            elif begriff_lower in suchbegriff or suchbegriff in begriff_lower:
                 teil_treffer.append((ort_name, orte_koordinaten[ort_name]))
+                gefunden = True
                 break
 
     # Exakte Treffer haben Vorrang - nur wenn keine da sind, Teiltreffer nutzen
     if exakte_treffer:
         return exakte_treffer
     return teil_treffer
-
-
 # =============================================================================
 # Funktion: Beste Kombination aus mehreren Start-/Zielkandidaten finden
 # Berechnet für JEDE Kombination die Weglänge und gibt die kürzeste zurück
